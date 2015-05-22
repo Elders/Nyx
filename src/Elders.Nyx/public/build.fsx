@@ -1,6 +1,6 @@
-﻿#I @"./bin/tools/FAKE/tools/"
-#r @"./bin/tools/FAKE/tools/FakeLib.dll"
-#r @"./bin/tools/Nuget.Core/lib/net40-Client/NuGet.Core.dll"
+﻿#I @"../../FAKE/tools/"
+#r @"../../FAKE/tools/FakeLib.dll"
+#r @"../../Nuget.Core/lib/net40-Client/NuGet.Core.dll"
 
 open System
 open System.IO

@@ -5,6 +5,7 @@ SETLOCAL
 SET TOOLS_PATH=.\bin\tools
 SET NUGET=%TOOLS_PATH%\NuGet\NuGet.exe
 SET FAKE=%TOOLS_PATH%\FAKE\tools\Fake.exe
+SET NYX=%TOOLS_PATH%\Nyx\tools\build.fsx
 SET BUILD_TOOLS_PATH="%ProgramFiles(x86)%\MSBuild\12.0\bin\MSBuild.exe"
 
 IF NOT EXIST %BUILD_TOOLS_PATH% (
@@ -38,4 +39,4 @@ IF NOT [%1]==[] (set TARGET="%1")
 SET SUMMARY="Elders.Nyx"
 SET DESCRIPTION="Elders.Nyx"
 
-%FAKE% "build.fsx" "target=%TARGET%" appName=Elders.Nyx appType=file appSummary=%SUMMARY% appDescription=%DESCRIPTION% nugetPackageName=Nyx
+%FAKE% %NYX% "target=%TARGET%" appName=Elders.Nyx appType=file appSummary=%SUMMARY% appDescription=%DESCRIPTION% nugetPackageName=Nyx
