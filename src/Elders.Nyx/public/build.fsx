@@ -125,7 +125,7 @@ Target "CreateFileNuGet" (fun _ ->
   let packages = [appName, appType]
   for appName,appType in packages do
 
-      let nugetOutDir = nugetWorkDir
+      let nugetOutDir = nugetWorkDir @@ "tools"
       let nugetOutArtifactsDir = nugetOutDir
       CleanDir nugetOutArtifactsDir
 

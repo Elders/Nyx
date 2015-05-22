@@ -28,6 +28,9 @@ echo Downloading latest version of Fake.exe...
 echo Downloading latest version of Nuget.Core...
 %NUGET% "install" "Nuget.Core" "-OutputDirectory" "%TOOLS_PATH%" "-ExcludeVersion" "-Prerelease"
 
+echo Downloading latest version of Nyx...
+%NUGET% "install" "Nyx" "-OutputDirectory" "%TOOLS_PATH%" "-ExcludeVersion" "-Prerelease"
+
 SET TARGET="ReleaseLocal"
 
 IF NOT [%1]==[] (set TARGET="%1")
