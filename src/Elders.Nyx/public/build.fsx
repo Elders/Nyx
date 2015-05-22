@@ -134,7 +134,7 @@ Target "CreateFileNuGet" (fun _ ->
       let nuspecFile = appName + ".nuspec"
       let nugetAccessKey =
           match appType with
-          | "nuget" -> getBuildParamOrDefault "nugetkey" ""
+          | "file" -> getBuildParamOrDefault "nugetkey" ""
           | _ ->  ""
 
       let nugetPackageName = getBuildParamOrDefault "nugetPackageName" appName
