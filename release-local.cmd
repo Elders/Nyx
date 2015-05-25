@@ -36,7 +36,7 @@ SET TARGET="ReleaseLocal"
 
 IF NOT [%1]==[] (set TARGET="%1")
 
-SET SUMMARY="Elders.Nyx"
-SET DESCRIPTION="Elders.Nyx"
+SET SUMMARY="Elders.Cronus.Projections.ElasticSearch"
+SET DESCRIPTION="Elders.Cronus.Projections.ElasticSearch"
 
-%FAKE% %NYX% "target=%TARGET%" appName=Elders.Nyx appType=file appSummary=%SUMMARY% appDescription=%DESCRIPTION% nugetPackageName=Nyx
+%FAKE% %NYX% "target=%TARGET%"  appName=Elders.Cronus.Projections.ElasticSearch appType=nuget appSummary=%SUMMARY% appDescription=%DESCRIPTION% nugetPackageName=Cronus.Projections.ElasticSearch

@@ -1,3 +1,6 @@
+#### 0.3.1 - 25.05.2015
+* Fix the path where nyx looks for nuspec
+
 #### 0.3.0 - 25.05.2015
 * Move the nuspec file inside the app
 

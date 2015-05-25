@@ -98,7 +98,7 @@ Target "CreateWebNuGet" (fun _ ->
           | _ ->  ""
 
       let nugetPackageName = getBuildParamOrDefault "nugetPackageName" appName
-      let nuspecFile = @"./src/" @@ nugetPackageName + ".nuspec"
+      let nuspecFile = @"./src/" @@ appName @@ nugetPackageName + ".nuspec"
       let nugetDoPublish = nugetAccessKey.Equals "" |> not
       let nugetPublishUrl = getBuildParamOrDefault "nugetserver" "https://nuget.org"
 
@@ -137,7 +137,7 @@ Target "CreateFileNuGet" (fun _ ->
           | _ ->  ""
 
       let nugetPackageName = getBuildParamOrDefault "nugetPackageName" appName
-      let nuspecFile = @"./src/" @@ nugetPackageName + ".nuspec"
+      let nuspecFile = @"./src/" @@ appName @@ nugetPackageName + ".nuspec"
       let nugetDoPublish = nugetAccessKey.Equals "" |> not
       let nugetPublishUrl = getBuildParamOrDefault "nugetserver" "https://nuget.org"
 
@@ -183,7 +183,7 @@ Target "CreateLibraryNuGet" (fun _ ->
       
       let nugetAccessKey = getBuildParamOrDefault "nugetkey" ""
       let nugetPackageName = getBuildParamOrDefault "nugetPackageName" appName
-      let nuspecFile = @"./src/" @@ nugetPackageName + ".nuspec"
+      let nuspecFile = @"./src/" @@ appName @@ nugetPackageName + ".nuspec"
       let nugetDoPublish = nugetAccessKey.Equals "" |> not
       let nugetPublishUrl = getBuildParamOrDefault "nugetserver" "https://nuget.org"
 
@@ -225,7 +225,7 @@ Target "CreateMsiNuGet" (fun _ ->
 
       let nugetAccessKey = getBuildParamOrDefault "nugetkey" ""
       let nugetPackageName = getBuildParamOrDefault "nugetPackageName" appName
-      let nuspecFile = @"./src/" @@ nugetPackageName + ".nuspec"
+      let nuspecFile = @"./src/" @@ appName @@ nugetPackageName + ".nuspec"
       let nugetDoPublish = nugetAccessKey.Equals "" |> not
       let nugetPublishUrl = getBuildParamOrDefault "nugetserver" "https://nuget.org"
 
