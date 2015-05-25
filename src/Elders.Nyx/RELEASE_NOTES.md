@@ -1,3 +1,6 @@
+#### 0.3.0 - 25.05.2015
+* Move the nuspec file inside the app
+
 #### 0.2.2 - 22.05.2015
 * Republish 0.2.1
 

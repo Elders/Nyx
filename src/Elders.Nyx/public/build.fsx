@@ -92,13 +92,13 @@ Target "CreateWebNuGet" (fun _ ->
       let depl = @".\src\" @@ appName @@ @".\deployment\"
       if TestDir depl then XCopy depl nugetOutDir
 
-      let nuspecFile = appName + ".nuspec"
       let nugetAccessKey =
           match appType with
-          | "nuget" -> getBuildParamOrDefault "nugetkey" ""
+          | "lib" -> getBuildParamOrDefault "nugetkey" ""
           | _ ->  ""
 
       let nugetPackageName = getBuildParamOrDefault "nugetPackageName" appName
+      let nuspecFile = @"./src/" @@ nugetPackageName + ".nuspec"
       let nugetDoPublish = nugetAccessKey.Equals "" |> not
       let nugetPublishUrl = getBuildParamOrDefault "nugetserver" "https://nuget.org"
 
@@ -131,13 +131,13 @@ Target "CreateFileNuGet" (fun _ ->
 
       CopyDir nugetOutArtifactsDir buildDir allFiles
 
-      let nuspecFile = appName + ".nuspec"
       let nugetAccessKey =
           match appType with
           | "file" -> getBuildParamOrDefault "nugetkey" ""
           | _ ->  ""
 
       let nugetPackageName = getBuildParamOrDefault "nugetPackageName" appName
+      let nuspecFile = @"./src/" @@ nugetPackageName + ".nuspec"
       let nugetDoPublish = nugetAccessKey.Equals "" |> not
       let nugetPublishUrl = getBuildParamOrDefault "nugetserver" "https://nuget.org"
 
@@ -180,9 +180,10 @@ Target "CreateLibraryNuGet" (fun _ ->
       let exclude = excludePaths dependencyFiles
       CopyDir nugetOutDir buildDir exclude
 
-      let nuspecFile = appName + ".nuspec"
+      
       let nugetAccessKey = getBuildParamOrDefault "nugetkey" ""
       let nugetPackageName = getBuildParamOrDefault "nugetPackageName" appName
+      let nuspecFile = @"./src/" @@ nugetPackageName + ".nuspec"
       let nugetDoPublish = nugetAccessKey.Equals "" |> not
       let nugetPublishUrl = getBuildParamOrDefault "nugetserver" "https://nuget.org"
 
@@ -222,9 +223,9 @@ Target "CreateMsiNuGet" (fun _ ->
       let depl = @".\src\" @@ appName @@ @".\deployment\"
       if TestDir depl then XCopy depl nugetOutDir
 
-      let nuspecFile = appName + ".nuspec"
       let nugetAccessKey = getBuildParamOrDefault "nugetkey" ""
       let nugetPackageName = getBuildParamOrDefault "nugetPackageName" appName
+      let nuspecFile = @"./src/" @@ nugetPackageName + ".nuspec"
       let nugetDoPublish = nugetAccessKey.Equals "" |> not
       let nugetPublishUrl = getBuildParamOrDefault "nugetserver" "https://nuget.org"
 
@@ -271,7 +272,7 @@ Target "Release" (fun _ ->
     ==> "RestoreBowerPackages"
     ==> "Build"
     =?> ("CreateFileNuGet", appType.Equals "file")
-    =?> ("CreateLibraryNuGet", appType.Equals "nuget")
+    =?> ("CreateLibraryNuGet", appType.Equals "lib")
     =?> ("CreateWebNuGet", appType.Equals "web")
     =?> ("CreateMsiNuGet", appType.Equals "msi")
     ==> "CreateNuget"
