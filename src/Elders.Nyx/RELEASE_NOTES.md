@@ -1,3 +1,6 @@
+#### 0.3.2 - 26.05.2015
+* Add deployment folder when building file package
+
 #### 0.3.1 - 25.05.2015
 * Fix the path where nyx looks for nuspec
 

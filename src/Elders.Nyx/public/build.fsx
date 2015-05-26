@@ -130,6 +130,10 @@ Target "CreateFileNuGet" (fun _ ->
       CleanDir nugetOutArtifactsDir
 
       CopyDir nugetOutArtifactsDir buildDir allFiles
+      
+      //  Copy the deployment files if any to the nuget pick dir.
+      let depl = @".\src\" @@ appName @@ @".\deployment\"
+      if TestDir depl then XCopy depl nugetOutDir
 
       let nugetAccessKey =
           match appType with
