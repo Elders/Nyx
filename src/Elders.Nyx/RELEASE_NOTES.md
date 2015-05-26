@@ -1,3 +1,6 @@
+#### 0.4.0 - 26.05.2015
+* Republish
+
 #### 0.3.2 - 26.05.2015
 * Add deployment folder when building file package
 
