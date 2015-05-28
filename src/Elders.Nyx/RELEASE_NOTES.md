@@ -1,3 +1,6 @@
+#### 0.6.1 - 28.05.2015
+* Fix bower package restore
+
 #### 0.6.0 - 28.05.2015
 * Add conventions when building packages
 

@@ -54,9 +54,9 @@ Target "RestoreNugetPackages" (fun _ ->
 )
 
 Target "RestoreBowerPackages" (fun _ ->
-    !! "./src/*/package.config"
+    !! "./src/*/package.json"
     |> Seq.iter (fun config ->
-        config.Replace("package.config", "")
+        config.Replace("package.json", "")
         |> fun cfgDir ->
             printf "Bower working dir: %s" cfgDir
             let result = ExecProcess (fun info ->
