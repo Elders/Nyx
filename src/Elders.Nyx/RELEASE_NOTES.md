@@ -1,3 +1,9 @@
+#### 0.6.0 - 28.05.2015
+* Add conventions when building packages
+
+#### 0.5.0 - 27.05.2015
+* Reorganize the script
+
 #### 0.4.0 - 26.05.2015
 * Republish
 
