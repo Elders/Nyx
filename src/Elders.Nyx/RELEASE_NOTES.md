@@ -1,3 +1,9 @@
+#### 0.6.4 - 28.05.2015
+* Do not add dependencies when building Tool package
+
+#### 0.6.3 - 28.05.2015
+* Do not add dependencies when building Tool package
+
 #### 0.6.2 - 28.05.2015
 * Properly create nuget packages
 

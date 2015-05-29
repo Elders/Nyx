@@ -119,7 +119,7 @@ Target "PrepareNuGet" (fun _ ->
 
 Target "CreateNuget" (fun _ ->
     let nugetPackagesFile = sourceDir @@ appName @@ "packages.config"
-    let dependencies = match File.Exists nugetPackagesFile with
+    let dependencies = match File.Exists nugetPackagesFile && appType.Equals "cli" |> not with
                         | true -> getDependencies nugetPackagesFile
                         | _ -> []
 
