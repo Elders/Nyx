@@ -17,19 +17,23 @@ type System.String with member x.endswith (comp:System.StringComparison) str = x
 //  BEGIN EDIT
 
 let appName = getBuildParamOrDefault "appName" ""
-let appType = getBuildParamOrDefault "appType" ""
 let appSummary = getBuildParamOrDefault "appSummary" ""
 let appDescription = getBuildParamOrDefault "appDescription" ""
 let appAuthors = ["Nikolai Mynkow"; "Simeon Dimov";]
 
 //  END EDIT
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+let appType = match appName.ToLowerInvariant() with
+                  | EndsWith "msi" -> "msi"
+                  | EndsWith "cli" -> "cli"
+                  | _ -> "lib"
 
 let sourceDir = "./src"
 let deploymentDir = sourceDir @@ appName @@ "deployment"
 let buildDir  = @"./bin/Release" @@ appName
-let websiteDir = buildDir @@ "_PublishedWebsites" @@ appName
-let msiDir = buildDir @@ "_PublishedMsi" @@ appName
+let websiteDir = buildDir @@ "_publishedWebsites" @@ appName
+let msiDir = buildDir @@ "_publishedMsi" @@ appName
+let toolDir = buildDir @@ "_tools" @@ appName
 
 let releaseNotes = sourceDir @@ appName @@ @"RELEASE_NOTES.md"
 let release = LoadReleaseNotes releaseNotes
@@ -54,9 +58,9 @@ Target "RestoreNugetPackages" (fun _ ->
 )
 
 Target "RestoreBowerPackages" (fun _ ->
-    !! "./src/*/package.json"
+    !! "./src/*/package.config"
     |> Seq.iter (fun config ->
-        config.Replace("package.json", "")
+        config.Replace("package.config", "")
         |> fun cfgDir ->
             printf "Bower working dir: %s" cfgDir
             let result = ExecProcess (fun info ->
@@ -77,6 +81,7 @@ Target "Build" (fun _ ->
 
     match appType with
     | "msi" -> sourceDir @@ appName + ".sln" |> fun dir -> !!dir |> MSBuildRelease msiDir "Build" |> Log "Build-Output: "
+    | "cli" -> sourceDir @@ appName @@ appName + ".csproj" |> fun dir -> !!dir |> MSBuildRelease toolDir "Build" |> Log "Build-Output: "
     | _ -> sourceDir @@ appName @@ appName + ".csproj" |> fun dir -> !!dir |> MSBuildRelease buildDir "Build" |> Log "Build-Output: "
 )
 
@@ -93,16 +98,22 @@ Target "PrepareNuGet" (fun _ ->
                           |> Seq.map(fun file -> "\\" + filename file.Path)
                           |> fun gga -> Collections.Set(gga)
                           |> Set.toList
-
+    
+    printfn "Nuget dependencies:"
+    dependencyFiles |> Seq.iter(fun file -> printfn "%s" file)
     let excludePaths (pathsToExclude : string list) (path: string) = pathsToExclude |> List.exists (path.endswith StringComparison.OrdinalIgnoreCase)|> not
     let exclude = excludePaths dependencyFiles
 
-    Directory.GetDirectories buildDir
+    let buildDirList = Directory.GetDirectories buildDir
+    buildDirList
     |> Seq.iter(fun dir ->
-        if dir.ToLowerInvariant().Contains "_published"
-            then CopyDir nugetContentDir (dir @@ appName) allFiles
-            else CopyDir nugetLibDir buildDir exclude)
+        if dir.ToLowerInvariant().Contains "_published" then CopyDir nugetContentDir (dir @@ appName) allFiles
+        if dir.ToLowerInvariant().Contains "_tools" then CopyDir nugetToolsDir (dir @@ appName) allFiles)
 
+    if buildDirList.Length.Equals 0
+    then CopyDir nugetLibDir buildDir exclude
+
+    //if Directory.Exists toolDir then CopyDir nugetToolsDir toolDir allFiles
     if Directory.Exists deploymentDir then CopyDir nugetToolsDir deploymentDir allFiles
 )
 

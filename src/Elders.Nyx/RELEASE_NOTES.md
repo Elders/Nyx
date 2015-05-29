@@ -1,3 +1,6 @@
+#### 0.6.2 - 28.05.2015
+* Properly create nuget packages
+
 #### 0.6.1 - 28.05.2015
 * Fix bower package restore
 
