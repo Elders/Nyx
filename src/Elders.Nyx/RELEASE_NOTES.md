@@ -1,3 +1,6 @@
+#### 0.6.5 - 02.06.2015
+* Fix bower package restore
+
 #### 0.6.4 - 28.05.2015
 * Do not add dependencies when building Tool package
 

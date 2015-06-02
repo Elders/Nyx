@@ -19,7 +19,7 @@ type System.String with member x.endswith (comp:System.StringComparison) str = x
 let appName = getBuildParamOrDefault "appName" ""
 let appSummary = getBuildParamOrDefault "appSummary" ""
 let appDescription = getBuildParamOrDefault "appDescription" ""
-let appAuthors = ["Nikolai Mynkow"; "Simeon Dimov";]
+let appAuthors = ["Nikolai Mynkow"; "Simeon Dimov"; "Blagovest Petrov";]
 
 //  END EDIT
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,9 +58,9 @@ Target "RestoreNugetPackages" (fun _ ->
 )
 
 Target "RestoreBowerPackages" (fun _ ->
-    !! "./src/*/package.config"
+    !! "./src/*/package.json"
     |> Seq.iter (fun config ->
-        config.Replace("package.config", "")
+        config.Replace("package.json", "")
         |> fun cfgDir ->
             printf "Bower working dir: %s" cfgDir
             let result = ExecProcess (fun info ->
