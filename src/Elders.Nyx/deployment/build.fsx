@@ -52,7 +52,7 @@ Target "RestoreNugetPackages" (fun _ ->
   !! "./src/*/packages.config"
   |> Seq.iter (RestorePackage (fun p ->
       { p with
-          Sources = nugetSources :: p.Sources
+          Sources = nugetSources :: "https://www.nuget.org/api/v2" :: p.Sources
           ToolPath = nuget
           OutputPath = packagesDir }))
 )

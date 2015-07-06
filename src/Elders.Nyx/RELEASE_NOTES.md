@@ -1,3 +1,6 @@
+#### 0.6.7 - 07.06.2015
+* Target https://www.nuget.org/api/v2 as default nuget endpoint
+
 #### 0.6.6 - 07.06.2015
 * Target https://www.nuget.org/api/v2 as default nuget endpoint
 
