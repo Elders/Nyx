@@ -1,3 +1,6 @@
+#### 0.7.4 - 25.09.2015
+* Properly invoke command to install dependencies in Init.ps1
+
 #### 0.7.3 - 25.09.2015
 * Add param($installPath, $toolsPath, $package, $project) in Init.ps1
 
