@@ -1,3 +1,6 @@
+#### 0.7.2 - 25.09.2015
+* Fix errors in Init.ps1
+
 #### 0.7.1 - 25.09.2015
 * Try to install dependencies via Init.ps1
 
