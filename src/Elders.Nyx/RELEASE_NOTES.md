@@ -1,3 +1,7 @@
+#### 0.7.0 - 25.09.2015
+* Make FAKE and Nuget.Core internal references to NYX.
+* Fixes #1
+
 #### 0.6.7 - 07.06.2015
 * Target https://www.nuget.org/api/v2 as default nuget endpoint
 
