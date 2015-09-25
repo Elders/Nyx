@@ -1,3 +1,6 @@
+#### 0.7.5 - 25.09.2015
+* Properly invoke command with proper parameters in Init.ps1
+
 #### 0.7.4 - 25.09.2015
 * Properly invoke command to install dependencies in Init.ps1
 
