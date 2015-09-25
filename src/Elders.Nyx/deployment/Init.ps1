@@ -1,3 +1,5 @@
+param($installPath, $toolsPath, $package, $project)
+
 $nuget = $Env:LocalAppData\NuGet.exe
 
 Write-Host "Downloading latest version of FAKE..."
