@@ -9,9 +9,5 @@
     <summary>@summary@</summary>
     <releaseNotes>@releaseNotes@</releaseNotes>
     <tags>.net build script complie</tags>
-    <dependencies>
-      <dependency id="FAKE" version="4.4.4" />
-      <dependency id="Nuget.Core" version="2.8.6" />
-    </dependencies>
   </metadata>
 </package>

@@ -1,3 +1,6 @@
+#### 0.7.1 - 25.09.2015
+* Try to install dependencies via Init.ps1
+
 #### 0.7.0 - 25.09.2015
 * Make FAKE and Nuget.Core internal references to NYX.
 * Fixes #1
