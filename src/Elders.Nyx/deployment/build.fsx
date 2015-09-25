@@ -1,6 +1,6 @@
-﻿#I @"../../FAKE/tools/"
-#r @"../../FAKE/tools/FakeLib.dll"
-#r @"../../Nuget.Core/lib/net40-Client/NuGet.Core.dll"
+﻿#I @"FAKE\tools\"
+#r @"FAKE\tools\FakeLib.dll"
+#r @"NuGet.Core\lib\net40-Client\NuGet.Core.dll"
 
 open System
 open System.IO
@@ -45,6 +45,10 @@ let nugetToolsDir = nugetWorkDir @@ "tools"
 let nugetContentDir = nugetWorkDir @@ "content"
 
 Target "Clean" (fun _ -> CleanDirs [buildDir; nugetWorkDir;])
+
+Target "PreBuild" (fun _ ->
+  & prebuild.cmd
+)
 
 Target "RestoreNugetPackages" (fun _ ->
   let packagesDir = @"./src/packages"
@@ -164,6 +168,7 @@ Target "Release" (fun _ ->
 )
 
 "Clean"
+    ==> "PreBuild"
     ==> "RestoreNugetPackages"
     ==> "RestoreBowerPackages"
     ==> "Build"
