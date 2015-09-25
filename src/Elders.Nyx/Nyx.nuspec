@@ -7,6 +7,7 @@
     <authors>@authors@</authors>
     <language>en-US</language>
     <summary>@summary@</summary>
+    <licenseUrl>https://raw.githubusercontent.com/Elders/Nyx/master/LICENSE</licenseUrl>
     <releaseNotes>@releaseNotes@</releaseNotes>
     <tags>.net build script complie</tags>
   </metadata>
