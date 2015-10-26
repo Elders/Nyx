@@ -42,7 +42,7 @@ echo Downloading latest version of GitVersion.CommandLine...
 IF NOT EXIST %LocalAppData%\GitVersion.CommandLine %NUGET% "install" "GitVersion.CommandLine" "-OutputDirectory" "%LocalAppData%" "-ExcludeVersion" "-Version" "3.3.0"
 
 echo Downloading latest version of Nyx...
-IF NOT EXIST %LocalAppData%\Nyx %NUGET% "install" "Nyx" "-OutputDirectory" "%LocalAppData%" "-ExcludeVersion"
+%NUGET% "install" "Nyx" "-OutputDirectory" "%LocalAppData%" "-ExcludeVersion"
 
 SET TARGET="Build"
 IF NOT [%1]==[] (set TARGET="%1")
