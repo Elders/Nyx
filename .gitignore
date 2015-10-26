@@ -4,7 +4,7 @@
 
 release.cmd
 *.orig
-
+*/**/AssemblyInfo.cs
 
 ##############################################################
 ## Ignore Visual Studio temporary files, build results, and ##
