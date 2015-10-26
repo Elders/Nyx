@@ -1,7 +1,7 @@
-﻿#I @"FAKE/tools/"
-#r @"FAKE/tools/FakeLib.dll"
-#r @"FAKE/tools/Fake.Deploy.Lib.dll"
-#r @"Nuget.Core/lib/net40-Client/NuGet.Core.dll"
+﻿#I @"../../FAKE/tools/"
+#r @"../../FAKE/tools/FakeLib.dll"
+#r @"../../FAKE/tools/Fake.Deploy.Lib.dll"
+#r @"../../Nuget.Core/lib/net40-Client/NuGet.Core.dll"
 
 open System
 open System.Collections.Generic
@@ -143,11 +143,13 @@ Target "Build" (fun _ ->
 )
 
 Target "PrepareReleaseNotes" (fun _ ->
-    if not String.Equals(release.NugetVersion, gitVer.NuGetVersionV2) then 
-                                                                        Console.ForegroundColor <- ConsoleColor.Red
-                                                                        printfn "Unable to find release notes for version '%s'" gitVer.NuGetVersionV2
-                                                                        Console.ForegroundColor <- ConsoleColor.White
-                                                                        Environment.Exit(1)
+    let isNOTValid = (gitVer.NuGetVersionV2, release.NugetVersion) |> String.Equals |> not
+
+    if isNOTValid then
+                    Console.ForegroundColor <- ConsoleColor.Red
+                    printfn "Unable to find release notes for version '%s'" gitVer.NuGetVersionV2
+                    Console.ForegroundColor <- ConsoleColor.White
+                    Environment.Exit(1)
 )
 
 Target "PrepareNuGet" (fun _ ->

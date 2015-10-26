@@ -1,3 +1,6 @@
+#### 0.8.0-beta0001 - 25.09.2015
+* GG
+
 #### 0.7.5 - 25.09.2015
 * Properly invoke command with proper parameters in Init.ps1
 
