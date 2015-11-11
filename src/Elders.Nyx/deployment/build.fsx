@@ -1,8 +1,10 @@
-﻿#I @"FAKE\tools\"
-#r @"FAKE\tools\FakeLib.dll"
-#r @"NuGet.Core\lib\net40-Client\NuGet.Core.dll"
+﻿#I @"../../FAKE/tools/"
+#r @"../../FAKE/tools/FakeLib.dll"
+#r @"../../FAKE/tools/Fake.Deploy.Lib.dll"
+#r @"../../Nuget.Core/lib/net40-Client/NuGet.Core.dll"
 
 open System
+open System.Collections.Generic
 open System.IO
 open Fake
 open Fake.Git
@@ -10,6 +12,7 @@ open Fake.FSharpFormatting
 open Fake.AssemblyInfoFile
 open Fake.ReleaseNotesHelper
 open Fake.ProcessHelper
+open Fake.Json
 
 type System.String with member x.endswith (comp:System.StringComparison) str = x.EndsWith(str, comp)
 
@@ -29,7 +32,9 @@ let appType = match appName.ToLowerInvariant() with
                   | _ -> "lib"
 
 let sourceDir = "./src"
-let deploymentDir = sourceDir @@ appName @@ "deployment"
+let appDir = sourceDir @@ appName
+let assemblyInfoFile = appDir @@ "Properties/AssemblyInfo.cs"
+let deploymentDir = appDir @@ "deployment"
 let buildDir  = @"./bin/Release" @@ appName
 let websiteDir = buildDir @@ "_publishedWebsites" @@ appName
 let msiDir = buildDir @@ "_publishedMsi" @@ appName
@@ -44,11 +49,9 @@ let nugetLibDir = nugetWorkDir @@ "lib" @@ "net45-full"
 let nugetToolsDir = nugetWorkDir @@ "tools"
 let nugetContentDir = nugetWorkDir @@ "content"
 
-Target "Clean" (fun _ -> CleanDirs [buildDir; nugetWorkDir;])
+let gitversion = environVar "GITVERSION"
 
-Target "PreBuild" (fun _ ->
-  & prebuild.cmd
-)
+Target "Clean" (fun _ -> CleanDirs [buildDir; nugetWorkDir;])
 
 Target "RestoreNugetPackages" (fun _ ->
   let packagesDir = @"./src/packages"
@@ -74,6 +77,56 @@ Target "RestoreBowerPackages" (fun _ ->
             if result <> 0 then failwithf "'npm install' returned with a non-zero exit code")
 )
 
+type Version = {
+    Major : int
+    Minor : string
+    Patch : string
+    PreReleaseTag : string
+    PreReleaseTagWithDash : string
+    BuildMetaData : string
+    BuildMetaDataPadded : string
+    FullBuildMetaData : string
+    MajorMinorPatch : string
+    SemVer : string
+    LegacySemVer : string
+    LegacySemVerPadded : string
+    AssemblySemVer : string
+    FullSemVer : string
+    InformationalVersion : string
+    BranchName : string
+    Sha : string
+    NuGetVersionV2 : string
+    NuGetVersion : string
+    CommitDate : string
+}
+
+let mutable gitVer = Unchecked.defaultof<Version>
+
+Target "UpdateAssemblyInfo" (fun _ ->
+    let result = ExecProcessAndReturnMessages (fun info ->
+        info.FileName <- gitversion
+        info.WorkingDirectory <- "."
+        info.Arguments <- "/output json") (TimeSpan.FromMinutes 5.0)
+        
+    if result.ExitCode <> 0 then failwithf "'GitVersion.exe' returned with a non-zero exit code"
+    
+    let jsonResult = System.String.Concat(result.Messages)
+    
+    jsonResult |> deserialize<Version> |> fun ver -> gitVer <- ver
+
+    let copyright = "Copyright ©  " + DateTime.UtcNow.Year.ToString()
+     
+    CreateCSharpAssemblyInfo assemblyInfoFile
+         [Attribute.Title appName
+          Attribute.Description appDescription
+          Attribute.ComVisible false
+          Attribute.Product appName
+          Attribute.Copyright copyright
+          Attribute.Version gitVer.AssemblySemVer
+          Attribute.FileVersion (gitVer.MajorMinorPatch + ".0")
+          Attribute.InformationalVersion gitVer.InformationalVersion]
+)
+
 Target "Build" (fun _ ->
     let appBuildFile = sourceDir @@ appName @@ "build.cmd"
     if File.Exists appBuildFile then
@@ -87,6 +140,16 @@ Target "Build" (fun _ ->
     | "msi" -> sourceDir @@ appName + ".sln" |> fun dir -> !!dir |> MSBuildRelease msiDir "Build" |> Log "Build-Output: "
     | "cli" -> sourceDir @@ appName @@ appName + ".csproj" |> fun dir -> !!dir |> MSBuildRelease toolDir "Build" |> Log "Build-Output: "
     | _ -> sourceDir @@ appName @@ appName + ".csproj" |> fun dir -> !!dir |> MSBuildRelease buildDir "Build" |> Log "Build-Output: "
+)
+
+Target "PrepareReleaseNotes" (fun _ ->
+    let isNOTValid = (gitVer.NuGetVersionV2, release.NugetVersion) |> String.Equals |> not
+
+    if isNOTValid then
+                    Console.ForegroundColor <- ConsoleColor.Red
+                    printfn "Unable to find release notes for version '%s'" gitVer.NuGetVersionV2
+                    Console.ForegroundColor <- ConsoleColor.White
+                    Environment.Exit(1)
 )
 
 Target "PrepareNuGet" (fun _ ->
@@ -140,7 +203,7 @@ Target "CreateNuget" (fun _ ->
             Authors = appAuthors
             Project = nugetPackageName
             Description = appDescription
-            Version = release.NugetVersion
+            Version = gitVer.NuGetVersionV2
             Summary = appSummary
             ReleaseNotes = release.Notes |> toLines
             Dependencies = dependencies
@@ -163,15 +226,16 @@ Target "Release" (fun _ ->
     Commit "" (sprintf "%s" notes)
     Branches.push ""
 
-    Branches.tag "" release.NugetVersion
-    Branches.pushTag "" "origin" release.NugetVersion
+    Branches.tag "" gitVer.NuGetVersionV2
+    Branches.pushTag "" "origin" gitVer.NuGetVersionV2
 )
 
 "Clean"
-    ==> "PreBuild"
     ==> "RestoreNugetPackages"
     ==> "RestoreBowerPackages"
+    ==> "UpdateAssemblyInfo"
     ==> "Build"
+    ==> "PrepareReleaseNotes"
     ==> "PrepareNuGet"
     ==> "CreateNuget"
     ==> "ReleaseLocal"

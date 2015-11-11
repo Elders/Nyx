@@ -1,3 +1,13 @@
+#### 0.8.0 - 11.11.2015
+* Now using GitVersion for auto-generating NuGet version.
+* Auto-generating AssemblyInfo files.
+
+#### 0.8.0-beta0002 - 26.10.2015
+* Now using GitVersion for auto-generating NuGet version.
+
+#### 0.8.0-beta0001 - 25.09.2015
+* GG
+
 #### 0.7.5 - 25.09.2015
 * Properly invoke command with proper parameters in Init.ps1
 
