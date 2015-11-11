@@ -1,3 +1,7 @@
+#### 0.8.0 - 11.11.2015
+* Now using GitVersion for auto-generating NuGet version.
+* Auto-generating AssemblyInfo files.
+
 #### 0.8.0-beta0002 - 26.10.2015
 * Now using GitVersion for auto-generating NuGet version.
 
