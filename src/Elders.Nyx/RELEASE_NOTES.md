@@ -1,3 +1,6 @@
+#### 0.10.0-beta0001 - 12.11.2015
+* Run Machine Specifications tests
+
 #### 0.9.0 - 12.11.2015
 * Add build definition template for TFS
 

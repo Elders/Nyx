@@ -50,6 +50,7 @@ let nugetToolsDir = nugetWorkDir @@ "tools"
 let nugetContentDir = nugetWorkDir @@ "content"
 
 let gitversion = environVar "GITVERSION"
+let mspec = environVar "MSPEC"
 
 Target "Clean" (fun _ -> CleanDirs [buildDir; nugetWorkDir;])
 
@@ -140,6 +141,17 @@ Target "Build" (fun _ ->
     | "msi" -> sourceDir @@ appName + ".sln" |> fun dir -> !!dir |> MSBuildRelease msiDir "Build" |> Log "Build-Output: "
     | "cli" -> sourceDir @@ appName @@ appName + ".csproj" |> fun dir -> !!dir |> MSBuildRelease toolDir "Build" |> Log "Build-Output: "
     | _ -> sourceDir @@ appName @@ appName + ".csproj" |> fun dir -> !!dir |> MSBuildRelease buildDir "Build" |> Log "Build-Output: "
+)
+
+Target "RunTests"(fun _ ->
+    let isTest = (appName, ".Tests") String.EndsWith
+    
+    if isTest then
+                let result = ExecProcessAndReturnMessages (fun info ->
+                    info.FileName <- mspec
+                    info.WorkingDirectory <- "."
+                    info.Arguments <- appDir @@ appName && ".dll") (TimeSpan.FromMinutes 5.0)
+                if result.ExitCode <> 0 then failwithf "'mspec-clr4.exe' returned with a non-zero exit code"
 )
 
 Target "PrepareReleaseNotes" (fun _ ->
@@ -235,6 +247,7 @@ Target "Release" (fun _ ->
     ==> "RestoreBowerPackages"
     ==> "UpdateAssemblyInfo"
     ==> "Build"
+    ==> "RunTests"
     ==> "PrepareReleaseNotes"
     ==> "PrepareNuGet"
     ==> "CreateNuget"
