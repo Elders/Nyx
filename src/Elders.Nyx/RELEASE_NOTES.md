@@ -1,3 +1,6 @@
+#### 0.9.0 - 12.11.2015
+* Add build definition template for TFS
+
 #### 0.8.0 - 11.11.2015
 * Now using GitVersion for auto-generating NuGet version.
 * Auto-generating AssemblyInfo files.
