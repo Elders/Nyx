@@ -9,6 +9,6 @@
     <summary>@summary@</summary>
     <licenseUrl>https://raw.githubusercontent.com/Elders/Nyx/master/LICENSE</licenseUrl>
     <releaseNotes>@releaseNotes@</releaseNotes>
-    <tags>.net build script complie</tags>
+    <tags>.net build script compile</tags>
   </metadata>
 </package>
