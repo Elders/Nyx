@@ -12,6 +12,7 @@ open Fake.FSharpFormatting
 open Fake.AssemblyInfoFile
 open Fake.ReleaseNotesHelper
 open Fake.ProcessHelper
+open Fake.FileHelper
 open Fake.Json
 
 type System.String with member x.endswith (comp:System.StringComparison) str = x.EndsWith(str, comp)
@@ -29,6 +30,7 @@ let appAuthors = ["Nikolai Mynkow"; "Simeon Dimov"; "Blagovest Petrov";]
 let appType = match appName.ToLowerInvariant() with
                   | EndsWith "msi" -> "msi"
                   | EndsWith "cli" -> "cli"
+                  | EndsWith "tests" -> "tests"
                   | _ -> "lib"
 
 let sourceDir = "./src"
@@ -41,13 +43,14 @@ let msiDir = buildDir @@ "_publishedMsi" @@ appName
 let toolDir = buildDir @@ "_tools" @@ appName
 
 let releaseNotes = sourceDir @@ appName @@ @"RELEASE_NOTES.md"
-let release = LoadReleaseNotes releaseNotes
 
 let nuget = environVar "NUGET"
 let nugetWorkDir = "./bin/nuget" @@ appName
 let nugetLibDir = nugetWorkDir @@ "lib" @@ "net45-full"
 let nugetToolsDir = nugetWorkDir @@ "tools"
 let nugetContentDir = nugetWorkDir @@ "content"
+
+let testResultDir = "./bin/tests" @@ appName
 
 let gitversion = environVar "GITVERSION"
 let mspec = environVar "MSPEC"
@@ -143,18 +146,20 @@ Target "Build" (fun _ ->
     | _ -> sourceDir @@ appName @@ appName + ".csproj" |> fun dir -> !!dir |> MSBuildRelease buildDir "Build" |> Log "Build-Output: "
 )
 
-Target "RunTests"(fun _ ->
-    let isTest = (appName, ".Tests") String.EndsWith
-    
-    if isTest then
-                let result = ExecProcessAndReturnMessages (fun info ->
-                    info.FileName <- mspec
-                    info.WorkingDirectory <- "."
-                    info.Arguments <- appDir @@ appName && ".dll") (TimeSpan.FromMinutes 5.0)
-                if result.ExitCode <> 0 then failwithf "'mspec-clr4.exe' returned with a non-zero exit code"
+Target "RunTests" (fun _ ->
+    let isTests = (appType, "tests") |> String.Equals
+
+    if isTests then
+                    CreateDir testResultDir
+                    let result = ExecProcess (fun info ->
+                        info.FileName <- mspec
+                        info.WorkingDirectory <- "."
+                        info.Arguments <- "--html " + testResultDir @@ "index.html " + buildDir @@ appName + ".dll") (TimeSpan.FromMinutes 5.0)
+                    if result <> 0 then failwithf "'mspec-clr4.exe' returned with a non-zero exit code"
 )
 
 Target "PrepareReleaseNotes" (fun _ ->
+    let release = LoadReleaseNotes releaseNotes
     let isNOTValid = (gitVer.NuGetVersionV2, release.NugetVersion) |> String.Equals |> not
 
     if isNOTValid then
@@ -197,6 +202,7 @@ Target "PrepareNuGet" (fun _ ->
 )
 
 Target "CreateNuget" (fun _ ->
+    let release = LoadReleaseNotes releaseNotes
     let nugetPackagesFile = sourceDir @@ appName @@ "packages.config"
     let dependencies = match File.Exists nugetPackagesFile && appType.Equals "cli" |> not with
                         | true -> getDependencies nugetPackagesFile
@@ -233,6 +239,7 @@ Target "ReleaseLocal" (fun _ ->
 )
 
 Target "Release" (fun _ ->
+    let release = LoadReleaseNotes releaseNotes
     StageAll ""
     let notes = String.concat "; " release.Notes
     Commit "" (sprintf "%s" notes)
