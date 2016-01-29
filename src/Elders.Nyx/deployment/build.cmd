@@ -50,4 +50,4 @@ IF NOT [%1]==[] (set TARGET="%1")
 SET SUMMARY="Elders.Nyx"
 SET DESCRIPTION="Elders.Nyx"
 
-%FAKE% %NYX% "target=%TARGET%" appName=Elders.Nyx appType=file appSummary=%SUMMARY% appDescription=%DESCRIPTION% nugetPackageName=Nyx
+%FAKE% %NYX% "target=%TARGET%" appName=Elders.Nyx appType=file appSummary=%SUMMARY% appDescription=%DESCRIPTION% appReleaseNotes=./src/RELEASE_NOTES.md nugetPackageName=Nyx
