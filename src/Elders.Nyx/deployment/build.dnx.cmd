@@ -4,7 +4,7 @@ SETLOCAL
 
 SET NUGET=%LocalAppData%\NuGet\NuGet.exe
 SET FAKE=%LocalAppData%\FAKE\tools\Fake.exe
-SET NYX=%LocalAppData%\Nyx\tools\build.fsx
+SET NYX=%LocalAppData%\Nyx\tools\build.dnx.fsx
 SET GITVERSION=%LocalAppData%\GitVersion.CommandLine\tools\GitVersion.exe
 SET MSBUILD14_TOOLS_PATH="%ProgramFiles(x86)%\MSBuild\14.0\bin\MSBuild.exe"
 SET BUILD_TOOLS_PATH=%MSBUILD14_TOOLS_PATH%
@@ -36,8 +36,5 @@ echo Downloading latest version of Nyx...
 
 SET TARGET="Build"
 IF NOT [%1]==[] (set TARGET="%1")
-
-SET SUMMARY="Elders.Nyx"
-SET DESCRIPTION="Elders.Nyx"
 
 %FAKE% %NYX% "target=%TARGET%" solution=Elders.Nyx appName=Elders.Nyx appReleaseNotes=./src/RELEASE_NOTES.md
