@@ -1,3 +1,6 @@
+#### 0.11.0-beta0001 - 29.01.2016
+* Added support for building vNext projects.
+
 #### 0.10.0 - 07.01.2016
 * Run Machine Specifications tests
 
