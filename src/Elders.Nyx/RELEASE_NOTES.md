@@ -1,3 +1,6 @@
+#### 0.11.0-beta0002 - 29.01.2016
+* Fixed vNext build example.
+
 #### 0.11.0-beta0001 - 29.01.2016
 * Added support for building vNext projects.
 
