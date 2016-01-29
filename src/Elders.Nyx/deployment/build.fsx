@@ -43,7 +43,8 @@ let websiteDir = buildDir @@ "_publishedWebsites" @@ appName
 let msiDir = buildDir @@ "_publishedMsi" @@ appName
 let toolDir = buildDir @@ "_tools" @@ appName
 
-let releaseNotes = sourceDir @@ appName @@ @"RELEASE_NOTES.md"
+let defaultReleaseNotes = sourceDir @@ appName @@ @"RELEASE_NOTES.md"
+let releaseNotes = getBuildParamOrDefault "appReleaseNotes" defaultReleaseNotes
 
 let nuget = environVar "NUGET"
 let nugetWorkDir = "./bin/nuget" @@ appName
