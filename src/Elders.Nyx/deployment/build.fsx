@@ -27,12 +27,13 @@ let appAuthors = ["Nikolai Mynkow"; "Simeon Dimov"; "Blagovest Petrov";]
 
 //  END EDIT
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-let appType = match appName.ToLowerInvariant() with
-                  | EndsWith "msi" -> "msi"
-                  | EndsWith "cli" -> "cli"
-                  | EndsWith "tests" -> "tests"
-                  | _ -> "lib"
-
+let conventionAppType = match appName.ToLowerInvariant() with
+                          | EndsWith "msi" -> "msi"
+                          | EndsWith "cli" -> "cli"
+                          | EndsWith "tests" -> "tests"
+                          | _ -> "lib"
+                          
+let appType = getBuildParamOrDefault "appType" conventionAppType
 let sourceDir = "./src"
 let appDir = sourceDir @@ appName
 let assemblyInfoFile = appDir @@ "Properties/AssemblyInfo.cs"
