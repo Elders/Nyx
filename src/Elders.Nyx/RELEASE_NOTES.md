@@ -1,3 +1,6 @@
+#### 0.11.0-beta0003 - 28.03.2016
+* Properly build lib package when output dir contains folders
+
 #### 0.11.0-beta0002 - 29.01.2016
 * Fixed vNext build example.
 

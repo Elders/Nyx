@@ -196,11 +196,14 @@ Target "PrepareNuGet" (fun _ ->
         if dir.ToLowerInvariant().Contains "_published" then CopyDir nugetContentDir (dir @@ appName) allFiles
         if dir.ToLowerInvariant().Contains "_tools" then CopyDir nugetToolsDir (dir @@ appName) allFiles)
 
-    if buildDirList.Length.Equals 0
+    let hasNonLibArtifacts = buildDirList |> Seq.exists(fun dir -> dir.ToLowerInvariant().Contains "_published" || dir.ToLowerInvariant().Contains "_tools")
+
+    if hasNonLibArtifacts |> not
     then CopyDir nugetLibDir buildDir exclude
 
     //if Directory.Exists toolDir then CopyDir nugetToolsDir toolDir allFiles
-    if Directory.Exists deploymentDir then CopyDir nugetToolsDir deploymentDir allFiles
+    if Directory.Exists deploymentDir 
+    then CopyDir nugetToolsDir deploymentDir allFiles
 )
 
 Target "CreateNuget" (fun _ ->
