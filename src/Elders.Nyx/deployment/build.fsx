@@ -23,7 +23,7 @@ type System.String with member x.endswith (comp:System.StringComparison) str = x
 let appName = getBuildParamOrDefault "appName" ""
 let appSummary = getBuildParamOrDefault "appSummary" ""
 let appDescription = getBuildParamOrDefault "appDescription" ""
-let appAuthors = ["Nikolai Mynkow"; "Simeon Dimov"; "Blagovest Petrov";]
+let appAuthors = ["Elders";]
 
 //  END EDIT
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,6 +134,9 @@ Target "UpdateAssemblyInfo" (fun _ ->
 )
 
 Target "Build" (fun _ ->
+    printfn "Creating build artifacts directory..."
+    CreateDir buildDir
+
     let appBuildFile = sourceDir @@ appName @@ "build.cmd"
     if File.Exists appBuildFile then
                                     let result = ExecProcess (fun info ->
@@ -191,6 +194,7 @@ Target "PrepareNuGet" (fun _ ->
     let exclude = excludePaths dependencyFiles
 
     let buildDirList = Directory.GetDirectories buildDir
+    printfn "4"
     buildDirList
     |> Seq.iter(fun dir ->
         if dir.ToLowerInvariant().Contains "_published" then CopyDir nugetContentDir (dir @@ appName) allFiles
@@ -201,7 +205,6 @@ Target "PrepareNuGet" (fun _ ->
     if hasNonLibArtifacts |> not
     then CopyDir nugetLibDir buildDir exclude
 
-    //if Directory.Exists toolDir then CopyDir nugetToolsDir toolDir allFiles
     if Directory.Exists deploymentDir 
     then CopyDir nugetToolsDir deploymentDir allFiles
 )
@@ -216,6 +219,22 @@ Target "CreateNuget" (fun _ ->
     let nugetAccessKey = getBuildParamOrDefault "nugetkey" ""
     let nugetPackageName = getBuildParamOrDefault "nugetPackageName" appName
     let nuspecFile = sourceDir @@ appName @@ nugetPackageName + ".nuspec"
+    let shouldCreateNuspecFile = nuspecFile |> TestFile |> not
+    let defaultNuspec = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+<package xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">
+  <metadata xmlns=\"http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd\">
+    <description>@description@</description>
+    <id>@project@</id>
+    <version>@build.number@</version>
+    <authors>@authors@</authors>
+    <language>en-US</language>
+    <summary>@summary@</summary>
+    <releaseNotes>@releaseNotes@</releaseNotes>
+    @dependencies@
+  </metadata>
+</package>"
+    if shouldCreateNuspecFile then
+                                WriteStringToFile false nuspecFile defaultNuspec
     let nugetDoPublish = nugetAccessKey.Equals "" |> not
     let nugetPublishUrl = getBuildParamOrDefault "nugetserver" "https://nuget.org"
 
@@ -254,10 +273,7 @@ Target "Release" (fun _ ->
     Branches.pushTag "" "origin" gitVer.NuGetVersionV2
 )
 
-"Clean"
-    ==> "RestoreNugetPackages"
-    ==> "RestoreBowerPackages"
-    ==> "UpdateAssemblyInfo"
+"UpdateAssemblyInfo"
     ==> "Build"
     ==> "RunTests"
     ==> "PrepareReleaseNotes"
@@ -266,4 +282,4 @@ Target "Release" (fun _ ->
     ==> "ReleaseLocal"
     ==> "Release"
 
-RunParameterTargetOrDefault "target" "Build"
+RunParameterTargetOrDefault "target" "ReleaseLocal"

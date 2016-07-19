@@ -1,3 +1,7 @@
+#### 0.11.0 - 20.07.2016
+* Updated packages
+* Rework the workflow. Now restoring packages has to be invoked explicitly because it is not part of the target execution chain because usually we have more than one project which is built as part of the script. This is also why the Release target is also out of the chain
+
 #### 0.11.0-beta0003 - 28.03.2016
 * Properly build lib package when output dir contains folders
 
