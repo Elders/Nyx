@@ -219,7 +219,7 @@ Target "CreateNuget" (fun _ ->
     let nugetAccessKey = getBuildParamOrDefault "nugetkey" ""
     let nugetPackageName = getBuildParamOrDefault "nugetPackageName" appName
     let nuspecFile = sourceDir @@ appName @@ nugetPackageName + ".nuspec"
-    let shouldCreateNuspecFile = nuspecFile |> TestFile |> not
+    let shouldCreateNuspecFile = nuspecFile |> File.Exists |> not
     let defaultNuspec = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <package xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">
   <metadata xmlns=\"http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd\">

@@ -1,3 +1,6 @@
+#### 0.11.1 - 21.07.2016
+* Uses `File.Exists` instead of `TestFile`
+
 #### 0.11.0 - 20.07.2016
 * Updated packages
 * Rework the workflow. Now restoring packages has to be invoked explicitly because it is not part of the target execution chain because usually we have more than one project which is built as part of the script. This is also why the Release target is also out of the chain
