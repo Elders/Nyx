@@ -26,7 +26,7 @@ echo Downloading latest version of NuGet.Core...
 IF NOT EXIST %LocalAppData%\NuGet.Core %NUGET% "install" "NuGet.Core" "-OutputDirectory" "%LocalAppData%" "-ExcludeVersion" "-Version" "2.11.1"
 
 echo Downloading FAKE...
-IF NOT EXIST %LocalAppData%\FAKE %NUGET% "install" "FAKE" "-OutputDirectory" "%LocalAppData%" "-ExcludeVersion" "-Version" "4.32.4"
+IF NOT EXIST %LocalAppData%\FAKE %NUGET% "install" "FAKE" "-OutputDirectory" "%LocalAppData%" "-ExcludeVersion" "-Version" "4.32.0"
 
 echo Downloading GitVersion.CommandLine...
 IF NOT EXIST %LocalAppData%\GitVersion.CommandLine %NUGET% "install" "GitVersion.CommandLine" "-OutputDirectory" "%LocalAppData%" "-ExcludeVersion" "-Version" "3.6.1"
@@ -49,4 +49,4 @@ SET DESCRIPTION="Elders.Nyx"
 
 %FAKE% %NYX% appName=Elders.Nyx appReleaseNotes=%RELEASE_NOTES% appSummary=%SUMMARY% appDescription=%DESCRIPTION% nugetPackageName=Nyx nugetkey=%RELEASE_NUGETKEY% nugetserver=%RELEASE_TARGETSOURCE% appType=file
 
-IF NOT [%1]==[] (%FAKE% %NYX% "target=Release" -st)
+IF NOT [%1]==[] (%FAKE% %NYX% "target=Release" -st appReleaseNotes=%RELEASE_NOTES%)

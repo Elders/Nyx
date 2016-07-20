@@ -1,3 +1,6 @@
+#### 0.11.2 - 21.07.2016
+* Properly assign git version tag
+
 #### 0.11.1 - 21.07.2016
 * Uses `File.Exists` instead of `TestFile`
 

@@ -164,6 +164,7 @@ Target "RunTests" (fun _ ->
 )
 
 Target "PrepareReleaseNotes" (fun _ ->
+    printfn "Loading release notes from %s" releaseNotes
     let release = LoadReleaseNotes releaseNotes
     let isNOTValid = (gitVer.NuGetVersionV2, release.NugetVersion) |> String.Equals |> not
 
@@ -194,7 +195,7 @@ Target "PrepareNuGet" (fun _ ->
     let exclude = excludePaths dependencyFiles
 
     let buildDirList = Directory.GetDirectories buildDir
-    printfn "4"
+
     buildDirList
     |> Seq.iter(fun dir ->
         if dir.ToLowerInvariant().Contains "_published" then CopyDir nugetContentDir (dir @@ appName) allFiles
@@ -210,6 +211,7 @@ Target "PrepareNuGet" (fun _ ->
 )
 
 Target "CreateNuget" (fun _ ->
+    printfn "Loading release notes from %s" releaseNotes
     let release = LoadReleaseNotes releaseNotes
     let nugetPackagesFile = sourceDir @@ appName @@ "packages.config"
     let dependencies = match File.Exists nugetPackagesFile && appType.Equals "cli" |> not with
@@ -219,7 +221,7 @@ Target "CreateNuget" (fun _ ->
     let nugetAccessKey = getBuildParamOrDefault "nugetkey" ""
     let nugetPackageName = getBuildParamOrDefault "nugetPackageName" appName
     let nuspecFile = sourceDir @@ appName @@ nugetPackageName + ".nuspec"
-    let shouldCreateNuspecFile = nuspecFile |> File.Exists |> not
+    let shouldCreateNuspecFile = nuspecFile |> TestFile |> not
     let defaultNuspec = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <package xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">
   <metadata xmlns=\"http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd\">
@@ -263,12 +265,26 @@ Target "ReleaseLocal" (fun _ ->
 )
 
 Target "Release" (fun _ ->
+    printfn "Initializing git version..."
+    let result = ExecProcessAndReturnMessages (fun info ->
+        info.FileName <- gitversion
+        info.WorkingDirectory <- "."
+        info.Arguments <- "/output json") (TimeSpan.FromMinutes 5.0)
+        
+    if result.ExitCode <> 0 then failwithf "'GitVersion.exe' returned with a non-zero exit code"
+    
+    let jsonResult = System.String.Concat(result.Messages)
+    
+    jsonResult |> deserialize<Version> |> fun ver -> gitVer <- ver
+
+    printfn "Loading release notes from %s" releaseNotes
     let release = LoadReleaseNotes releaseNotes
     StageAll ""
     let notes = String.concat "; " release.Notes
     Commit "" (sprintf "%s" notes)
     Branches.push ""
 
+    printfn "Assign version %s as git tag" gitVer.NuGetVersionV2
     Branches.tag "" gitVer.NuGetVersionV2
     Branches.pushTag "" "origin" gitVer.NuGetVersionV2
 )
@@ -280,6 +296,5 @@ Target "Release" (fun _ ->
     ==> "PrepareNuGet"
     ==> "CreateNuget"
     ==> "ReleaseLocal"
-    ==> "Release"
 
 RunParameterTargetOrDefault "target" "ReleaseLocal"
