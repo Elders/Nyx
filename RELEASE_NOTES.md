@@ -1,3 +1,6 @@
+#### 0.12.0 - 07.10.2016
+* Adds support for multiple packages withing the samo git repository
+
 #### 0.11.3 - 22.07.2016
 * Uses `File.Exists` instead of `TestFile`
 
