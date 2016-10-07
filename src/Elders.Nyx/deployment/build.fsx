@@ -202,22 +202,25 @@ Target "PrepareReleaseNotes" (fun _ ->
     let release = LoadReleaseNotes releaseNotes
     printfn "Release notes version is %s" release.NugetVersion
 
+    printfn "GitVer: %s  |  ReleaseNotesVer: %s" gitVer.NuGetVersionV2 release.NugetVersion
+
     let isValidRelease = (gitVer.NuGetVersionV2, release.NugetVersion) |> String.Equals
     if isValidRelease then
         let canPublishNuget = CanPublishPackage(nugetPackageName, release.NugetVersion).IsSome
         let nugetAccessKey = getBuildParamOrDefault "nugetkey" ""
         canRelease <- nugetAccessKey.Equals "" |> not && canPublishNuget
         if canRelease |> not then
-            if nugetAccessKey.Equals "" then
-                Console.ForegroundColor <- ConsoleColor.Red
-                printfn "Unable to release because nuget access key is missing"
-                Console.ForegroundColor <- ConsoleColor.White
-                Environment.Exit(1)
-            if canPublishNuget |> not then
-                Console.ForegroundColor <- ConsoleColor.Red
-                printfn "Unable to release because '%s' version is already released or lower than the currently release version" gitVer.NuGetVersionV2
-                Console.ForegroundColor <- ConsoleColor.White
-                Environment.Exit(1)
+            if gitVer.NuGetVersionV2.Equals release.NugetVersion |> not then
+                if nugetAccessKey.Equals "" then
+                    Console.ForegroundColor <- ConsoleColor.Red
+                    printfn "Unable to release because nuget access key is missing"
+                    Console.ForegroundColor <- ConsoleColor.White
+                    Environment.Exit(1)
+                if canPublishNuget |> not then
+                    Console.ForegroundColor <- ConsoleColor.Red
+                    printfn "Unable to release because '%s' version is already released or lower than the currently release version" gitVer.NuGetVersionV2
+                    Console.ForegroundColor <- ConsoleColor.White
+                    Environment.Exit(1)
     else
         printfn "Regular build without release. Package will not be published. If you want to publish a release both versions should match => GitVer: %s  |  ReleaseNotesVer: %s" gitVer.NuGetVersionV2 release.NugetVersion
 )

@@ -1,3 +1,6 @@
+#### 0.12.2 - 07.10.2016
+* Displays proper error messages
+
 #### 0.12.1 - 07.10.2016
 * Publishing a release is triggered by supplying a release notes record
 
