@@ -44,9 +44,7 @@ IF NOT [%2]==[] (set RELEASE_TARGETSOURCE="%2")
 
 
 SET RELEASE_NOTES=RELEASE_NOTES.md
-SET SUMMARY="Elders.Nyx"
-SET DESCRIPTION="Elders.Nyx"
+SET SUMMARY="Build script which only purpose is to provide out of the box solution for building .NET projects, creating nuget packages and publishing packages"
+SET DESCRIPTION="Build script which only purpose is to provide out of the box solution for building .NET projects, creating nuget packages and publishing packages"
 
 %FAKE% %NYX% appName=Elders.Nyx appReleaseNotes=%RELEASE_NOTES% appSummary=%SUMMARY% appDescription=%DESCRIPTION% nugetPackageName=Nyx nugetkey=%RELEASE_NUGETKEY% nugetserver=%RELEASE_TARGETSOURCE% appType=file
-
-IF NOT [%1]==[] (%FAKE% %NYX% "target=Release" -st appReleaseNotes=%RELEASE_NOTES%)
