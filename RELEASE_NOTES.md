@@ -1,3 +1,6 @@
+#### 0.12.1 - 07.10.2016
+* Publishing a release is triggered by supplying a release notes record
+
 #### 0.12.0 - 07.10.2016
 * Adds support for multiple packages withing the samo git repository
 
