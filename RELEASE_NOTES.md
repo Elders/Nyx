@@ -1,3 +1,6 @@
+#### 0.12.3 - 08.10.2016
+* Complete refactor. OMG
+
 #### 0.12.2 - 07.10.2016
 * Displays proper error messages
 
