@@ -1,3 +1,6 @@
+#### 0.12.4 - 09.10.2016
+* Uses double build script
+
 #### 0.12.3 - 08.10.2016
 * Complete refactor. OMG
 

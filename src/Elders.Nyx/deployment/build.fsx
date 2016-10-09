@@ -14,9 +14,76 @@ open Fake.ReleaseNotesHelper
 open Fake.ProcessHelper
 open Fake.FileHelper
 open Fake.Json
-open System.Text.RegularExpressions
 
-type GitVersion = {
+type System.String with member x.endswith (comp:System.StringComparison) str = x.EndsWith(str, comp)
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  BEGIN EDIT
+
+let appName = getBuildParamOrDefault "appName" ""
+let appSummary = getBuildParamOrDefault "appSummary" ""
+let appDescription = getBuildParamOrDefault "appDescription" ""
+let appAuthors = ["Elders";]
+
+//  END EDIT
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+let conventionAppType = match appName.ToLowerInvariant() with
+                          | EndsWith "msi" -> "msi"
+                          | EndsWith "cli" -> "cli"
+                          | EndsWith "tests" -> "tests"
+                          | _ -> "lib"
+                          
+let appType = getBuildParamOrDefault "appType" conventionAppType
+let sourceDir = "./src"
+let appDir = sourceDir @@ appName
+let assemblyInfoFile = appDir @@ "Properties/AssemblyInfo.cs"
+let deploymentDir = appDir @@ "deployment"
+let buildDir  = @"./bin/Release" @@ appName
+let websiteDir = buildDir @@ "_publishedWebsites" @@ appName
+let msiDir = buildDir @@ "_publishedMsi" @@ appName
+let toolDir = buildDir @@ "_tools" @@ appName
+
+let defaultReleaseNotes = sourceDir @@ appName @@ @"RELEASE_NOTES.md"
+let releaseNotes = getBuildParamOrDefault "appReleaseNotes" defaultReleaseNotes
+
+let nuget = environVar "NUGET"
+let nugetWorkDir = "./bin/nuget" @@ appName
+let nugetLibDir = nugetWorkDir @@ "lib" @@ "net45-full"
+let nugetToolsDir = nugetWorkDir @@ "tools"
+let nugetContentDir = nugetWorkDir @@ "content"
+
+let testResultDir = "./bin/tests" @@ appName
+
+let gitversion = environVar "GITVERSION"
+let mspec = environVar "MSPEC"
+
+Target "Clean" (fun _ -> CleanDirs [buildDir; nugetWorkDir;])
+
+Target "RestoreNugetPackages" (fun _ ->
+  let packagesDir = @"./src/packages"
+  let nugetSources = environVarOrDefault "NUGET_SOURCES" "https://www.nuget.org/api/v2"
+  !! "./src/*/packages.config"
+  |> Seq.iter (RestorePackage (fun p ->
+      { p with
+          Sources = nugetSources :: "https://www.nuget.org/api/v2" :: p.Sources
+          ToolPath = nuget
+          OutputPath = packagesDir }))
+)
+
+Target "RestoreBowerPackages" (fun _ ->
+    !! "./src/*/package.json"
+    |> Seq.iter (fun config ->
+        config.Replace("package.json", "")
+        |> fun cfgDir ->
+            printf "Bower working dir: %s" cfgDir
+            let result = ExecProcess (fun info ->
+                            info.FileName <- "cmd"
+                            info.WorkingDirectory <- cfgDir
+                            info.Arguments <- "/c npm install") (TimeSpan.FromMinutes 20.0)
+            if result <> 0 then failwithf "'npm install' returned with a non-zero exit code")
+)
+
+type Version = {
     Major : int
     Minor : string
     Patch : string
@@ -39,356 +106,195 @@ type GitVersion = {
     CommitDate : string
 }
 
-type AppInfo(name, summary, description, authors) =
-    let copyright = "Copyright © " + DateTime.UtcNow.Year.ToString()
-    member this.Name = name
-    member this.Sumarry = summary
-    member this.Description = description
-    member this.Authors = authors
-    member this.UpdateAssemblyInfo(assemblyInfoFile, getGitVersion) = 
-        CreateCSharpAssemblyInfo assemblyInfoFile
-           [Attribute.Title name
-            Attribute.Description description
-            Attribute.ComVisible false
-            Attribute.Product name
-            Attribute.Copyright copyright
-            Attribute.Version getGitVersion.AssemblySemVer
-            Attribute.FileVersion (getGitVersion.MajorMinorPatch + ".0")
-            Attribute.InformationalVersion getGitVersion.InformationalVersion]
+let mutable gitVer = Unchecked.defaultof<Version>
 
-type System.String with member x.endswith (comp:System.StringComparison) str = x.EndsWith(str, comp)
-
-type Repository(appInfo:AppInfo, appType, sourceDir, releaseNotes) =
-    let appName = appInfo.Name
-    let getReleaseNotes =
-        printfn "Loading release notes from %s" releaseNotes
-        LoadReleaseNotes releaseNotes
-
-    let getGitVersion =
-        let gitversionconfig = sourceDir @@ appName @@ "gitversion.yml"
-        let workingDir = match File.Exists gitversionconfig with
-                            | true -> sourceDir @@ appName
-                            | _ -> "."
-        printfn "GitVersion working dir is %s" workingDir
-        let gitversion = environVar "GITVERSION"
-        let result = ExecProcessAndReturnMessages (fun info ->
-            info.FileName <- gitversion
-            info.WorkingDirectory <- workingDir
-            info.Arguments <- "/output json") (TimeSpan.FromMinutes 5.0)
-        if result.ExitCode <> 0 then failwithf "'GitVersion.exe' returned with a non-zero exit code"
-        let jsonResult = System.String.Concat(result.Messages)
-        jsonResult |> deserialize<GitVersion>
-
-    let appDir = sourceDir @@ appInfo.Name
-    let assemblyInfoFile = appDir @@ "Properties/AssemblyInfo.cs"
+Target "UpdateAssemblyInfo" (fun _ ->
+    let result = ExecProcessAndReturnMessages (fun info ->
+        info.FileName <- gitversion
+        info.WorkingDirectory <- "."
+        info.Arguments <- "/output json") (TimeSpan.FromMinutes 5.0)
+        
+    if result.ExitCode <> 0 then failwithf "'GitVersion.exe' returned with a non-zero exit code"
     
-
-    member this.AppInfo = appInfo
-    member this.AppName = appName
-    member this.AppType = appType
-    member this.SourceDir = sourceDir
-    member this.AppDir = appDir
-    member this.AssemblyInfoFile = this.AppDir @@ "Properties/AssemblyInfo.cs"
-    member this.ReleaseNotes = getReleaseNotes
-    member this.GitVersion = getGitVersion
-    member this.DeploymentDir = this.AppDir @@ "deployment"
-
-type Artifacts(appName, artifactsDir) =
-    member this.BuildDir  = artifactsDir @@ appName
-    member this.WebsiteDir = this.BuildDir @@ "_publishedWebsites" @@ appName
-    member this.MsiDir = this.BuildDir @@ "_publishedMsi" @@ appName
-    member this.ToolDir = this.BuildDir @@ "_tools" @@ appName
-    member this.Clean() = CleanDirs [this.BuildDir;]
-
-type RepositoryFactory() =
-    let appInfo = new AppInfo(
-                    getBuildParamOrDefault "appName" "",
-                    getBuildParamOrDefault "appSummary" "",
-                    getBuildParamOrDefault "appDescription" "",
-                    ["Elders";])
-
-    let conventionAppType = match appInfo.Name.ToLower() with
-                              | EndsWith "msi" -> "msi"
-                              | EndsWith "cli" -> "cli"
-                              | EndsWith "tests" -> "tests"
-                              | _ -> "lib"
-
-    let appType = getBuildParamOrDefault "appType" conventionAppType
-    let sourceDir = "./src"
-    let defaultReleaseNotes = sourceDir @@ appInfo.Name @@ @"RELEASE_NOTES.md"
-    let releaseNotes = getBuildParamOrDefault "appReleaseNotes" defaultReleaseNotes
+    let jsonResult = System.String.Concat(result.Messages)
     
-    member this.GetRepository = new Repository(appInfo, appType, sourceDir, releaseNotes)
+    jsonResult |> deserialize<Version> |> fun ver -> gitVer <- ver
 
-type EldersNuget(repository:Repository) =
-    let nuget = environVar "NUGET"
-    let nugetPackageName = getBuildParamOrDefault "nugetPackageName" repository.AppName
-    let nugetWorkDir = "./bin/nuget" @@ repository.AppName
-    let nugetLibDir = nugetWorkDir @@ "lib" @@ "net45-full"
-    let nugetToolsDir = nugetWorkDir @@ "tools"
-    let nugetContentDir = nugetWorkDir @@ "content"
-    let canPublishPackage gitVersion =
-        let version = gitVersion.NuGetVersionV2
-        let prerelease = if version.Contains("beta") then " -prerelease" else ""
-        let args = "/c " + nuget + " list " + repository.AppName + prerelease;
-        let result = ExecProcessAndReturnMessages (fun info ->
-                                info.FileName <- "cmd"
-                                info.Arguments <- args) (TimeSpan.FromMinutes 20.0)
-        if result.ExitCode <> 0 then failwithf "%s returned with a non-zero exit code" args
-        printfn "Found %i packages." result.Messages.Count
-        Console.WriteLine "------------------------"
-        result.Messages 
-        |> Seq.map(fun split -> Regex.Split(split, " "))
-        |> Seq.map(fun q ->
-            printfn "%s %s" q.[0] q.[1]
-            (q.[0].Equals(repository.AppName, StringComparison.OrdinalIgnoreCase) && q.[1] < version) || (q.[0].Equals("No", StringComparison.OrdinalIgnoreCase) && q.[1].Equals("packages", StringComparison.OrdinalIgnoreCase)))
-        |> Seq.tryFind(fun e -> e.Equals(true))
-
-    let getNugetPackageDependencies =
-        let nugetPackagesFile = repository.AppDir @@ "packages.config"
-        match File.Exists nugetPackagesFile && repository.AppType.Equals "cli" |> not with
-        | true -> getDependencies nugetPackagesFile
-        | _ -> []
-
-    let getNuspecFile =
-        let nuspecFile = repository.AppDir @@ nugetPackageName + ".nuspec"
-        let defaultNuspec = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
-            <package xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">
-              <metadata xmlns=\"http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd\">
-                <description>@description@</description>
-                <id>@project@</id>
-                <version>@build.number@</version>
-                <authors>@authors@</authors>
-                <language>en-US</language>
-                <summary>@summary@</summary>
-                <releaseNotes>@releaseNotes@</releaseNotes>
-                @dependencies@
-              </metadata>
-            </package>"
-        let shouldCreateNuspecFile = nuspecFile |> File.Exists |> not
-        if shouldCreateNuspecFile then WriteStringToFile false nuspecFile defaultNuspec
-        nuspecFile
-
-    let prepareNugetPackage(artifacts:Artifacts) =
-        //  Exclude libraries which are part of the packages.config file only when nuget package is created.
-        let dependencyFiles = getNugetPackageDependencies
-                              |> Seq.map(fun (name,ver) -> name + "." + ver)
-                              |> Seq.collect(fun pkgName -> !! ("./src/packages/*/" + pkgName + ".nupkg"))
-                              |> Seq.collect(fun pkg -> global.NuGet.ZipPackage(pkg).GetFiles())
-                              |> Seq.map(fun file -> "\\" + filename file.Path)
-                              |> fun gga -> Collections.Set(gga)
-                              |> Set.toSeq
-        printfn "Nuget dependencies:"
-        dependencyFiles |> Seq.iter(fun file -> printfn "%s" file)
-        let excludePaths (pathsToExclude : string seq) (path: string) = pathsToExclude |> Seq.exists (path.endswith StringComparison.OrdinalIgnoreCase)|> not
-        let exclude = excludePaths dependencyFiles
-        let buildDirList = Directory.GetDirectories artifacts.BuildDir
-        buildDirList
-        |> Seq.iter(fun dir ->
-            if dir.ToLowerInvariant().Contains "_published" then CopyDir nugetContentDir (dir @@ repository.AppName) allFiles
-            if dir.ToLowerInvariant().Contains "_tools" then CopyDir nugetToolsDir (dir @@ repository.AppName) allFiles)
-        let hasNonLibArtifacts = buildDirList |> Seq.exists(fun dir -> dir.ToLowerInvariant().Contains "_published" || dir.ToLowerInvariant().Contains "_tools")
-        if hasNonLibArtifacts |> not
-        then CopyDir nugetLibDir artifacts.BuildDir exclude
-        if Directory.Exists repository.DeploymentDir 
-        then CopyDir nugetToolsDir repository.DeploymentDir allFiles
-
-    let createNuget release =
-        let nugetAccessKey = getBuildParamOrDefault "nugetkey" ""
-        let nugetPublishUrl = getBuildParamOrDefault "nugetserver" "https://www.nuget.org/api/v2/package"
-        if release then printfn "Pushing %s to %s ..." nugetPackageName nugetPublishUrl
-
-        //  Create/Publish the nuget package
-        NuGet (fun app ->
-            {app with
-                NoPackageAnalysis = true
-                Authors = repository.AppInfo.Authors
-                Project = nugetPackageName
-                Description = repository.AppInfo.Description
-                Version = repository.GitVersion.NuGetVersionV2
-                Summary = repository.AppInfo.Sumarry
-                ReleaseNotes = repository.ReleaseNotes.Notes |> toLines
-                Dependencies = getNugetPackageDependencies
-                AccessKey = nugetAccessKey
-                Publish = release
-                PublishUrl = nugetPublishUrl
-                ToolPath = nuget
-                OutputPath = nugetWorkDir
-                WorkingDir = nugetWorkDir
-            }) getNuspecFile
-
-    member this.CanPublishPackage gitversion = canPublishPackage gitversion
-    member this.Clean() = CleanDirs [nugetWorkDir;]
-    member this.CreateNuget artifacts release =
-        prepareNugetPackage artifacts
-        createNuget release
-
-let ErrorAndExit(message:string) =
-    Console.ForegroundColor <- ConsoleColor.Red
-    printfn "Unable to release because nuget access key is missing"
-    Console.ForegroundColor <- ConsoleColor.White
-    Environment.Exit(1)
-
-type Release(repository:Repository, nuget:EldersNuget) =
-    let isValidRelease = (repository.ReleaseNotes.NugetVersion, repository.GitVersion.NuGetVersionV2) |> String.Equals
-
-    let canRelease = 
-        printfn "GitVer: %s  |  ReleaseNotesVer: %s" repository.GitVersion.NuGetVersionV2 repository.ReleaseNotes.NugetVersion
-        let mutable canRelease = false
-
-        if isValidRelease then
-            let canPublishNuget = (nuget.CanPublishPackage repository.GitVersion).IsSome
-            let nugetAccessKey = getBuildParamOrDefault "nugetkey" ""
-            canRelease <- nugetAccessKey.Equals "" |> not && canPublishNuget
-            if canRelease |> not then
-                if repository.GitVersion.NuGetVersionV2.Equals repository.ReleaseNotes.NugetVersion |> not then
-                    if nugetAccessKey.Equals "" then
-                        ErrorAndExit "Unable to release because nuget access key is missing"
-                    if canPublishNuget |> not then
-                        ErrorAndExit "Unable to release because this version is already released or lower than the currently release version"
-        else
-            printfn "Regular build without release. Package will not be published. If you want to publish a release both versions should match => GitVer: %s  |  ReleaseNotesVer: %s" repository.GitVersion.NuGetVersionV2 repository.ReleaseNotes.NugetVersion
-        canRelease
-
-    let gitversiontag = getBuildParamOrDefault "gitvertag" ""
-    
-    member this.IsValidRelease = isValidRelease
-    member this.CanRelease = canRelease
-    member this.IsCustomGitVersionTag = String.IsNullOrEmpty gitversiontag |> not
-
-type Tests(appInfo:AppInfo) =
-    let testResultDir = "./bin/tests" @@ appInfo.Name
-    let mspec = environVar "MSPEC"
-
-    member this.TestResultDir = testResultDir
-    member this.MSpec = mspec
-
-Target "Clean" (fun _ -> 
-    CleanDirs [@"./bin"]
-)
-
-Target "RestoreNugetPackages" (fun _ ->
-    let nuget = environVar "NUGET"
-    let packagesDir = @"./src/packages"
-    let nugetSources = environVarOrDefault "NUGET_SOURCES" "https://www.nuget.org/api/v2"
-    !! "./src/*/packages.config"
-    |> Seq.iter (RestorePackage (fun p ->
-        { p with
-            Sources = nugetSources :: "https://www.nuget.org/api/v2" :: p.Sources
-            ToolPath = nuget
-            OutputPath = packagesDir }))
-)
-
-Target "RestoreBowerPackages" (fun _ ->
-    !! "./src/*/package.json"
-    |> Seq.iter (fun config ->
-        config.Replace("package.json", "")
-        |> fun cfgDir ->
-            printf "Bower working dir: %s" cfgDir
-            let result = ExecProcess (fun info ->
-                            info.FileName <- "cmd"
-                            info.WorkingDirectory <- cfgDir
-                            info.Arguments <- "/c npm install") (TimeSpan.FromMinutes 20.0)
-            if result <> 0 then failwithf "'npm install' returned with a non-zero exit code")
+    let copyright = "Copyright ©  " + DateTime.UtcNow.Year.ToString()
+     
+    CreateCSharpAssemblyInfo assemblyInfoFile
+         [Attribute.Title appName
+          Attribute.Description appDescription
+          Attribute.ComVisible false
+          Attribute.Product appName
+          Attribute.Copyright copyright
+          Attribute.Version gitVer.AssemblySemVer
+          Attribute.FileVersion (gitVer.MajorMinorPatch + ".0")
+          Attribute.InformationalVersion gitVer.InformationalVersion]
 )
 
 Target "Build" (fun _ ->
-    let repositoryFactory = new RepositoryFactory()
-    let repository = repositoryFactory.GetRepository
-    let artifacts = new Artifacts(repository.AppName, @"./bin/Release")
-    let eldersNuget = new EldersNuget(repository)
-    let release = new Release(repository, eldersNuget)
-
-    let buildDir = artifacts.BuildDir
-    let appName = repository.AppName
-    let sourceDir = repository.SourceDir
-    let msiDir = artifacts.MsiDir
-    let toolDir = artifacts.ToolDir
-
     printfn "Creating build artifacts directory..."
     CreateDir buildDir
 
-    repository.AppInfo.UpdateAssemblyInfo(repository.AssemblyInfoFile, repository.GitVersion)
-
     let appBuildFile = sourceDir @@ appName @@ "build.cmd"
-    if File.Exists appBuildFile 
-    then
-        let result = ExecProcess (fun info ->
-                info.FileName <- "cmd"
-                info.WorkingDirectory <- sourceDir @@ appName
-                info.Arguments <- "/c build.cmd") (TimeSpan.FromMinutes 5.0)
-        if result <> 0 then ErrorAndExit "'build.cmd' returned with a non-zero exit code"
+    if File.Exists appBuildFile then
+                                    let result = ExecProcess (fun info ->
+                                            info.FileName <- "cmd"
+                                            info.WorkingDirectory <- sourceDir @@ appName
+                                            info.Arguments <- "/c build.cmd") (TimeSpan.FromMinutes 5.0)
+                                    if result <> 0 then failwithf "'build.cmd' returned with a non-zero exit code"
 
-    match repository.AppType with
+    match appType with
     | "msi" -> sourceDir @@ appName + ".sln" |> fun dir -> !!dir |> MSBuildRelease msiDir "Build" |> Log "Build-Output: "
     | "cli" -> sourceDir @@ appName @@ appName + ".csproj" |> fun dir -> !!dir |> MSBuildRelease toolDir "Build" |> Log "Build-Output: "
     | _ -> sourceDir @@ appName @@ appName + ".csproj" |> fun dir -> !!dir |> MSBuildRelease buildDir "Build" |> Log "Build-Output: "
 )
 
 Target "RunTests" (fun _ ->
-    let repositoryFactory = new RepositoryFactory()
-    let repository = repositoryFactory.GetRepository
-    let artifacts = new Artifacts(repository.AppName, @"./bin/Release")
-    let eldersNuget = new EldersNuget(repository)
-    let release = new Release(repository, eldersNuget)
-    let tests = new Tests(repository.AppInfo)
-
-    let isTests = (repository.AppType, "tests") |> String.Equals
+    let isTests = (appType, "tests") |> String.Equals
 
     if isTests then
-                    CreateDir tests.TestResultDir
+                    CreateDir testResultDir
                     let result = ExecProcess (fun info ->
-                        info.FileName <- tests.MSpec
+                        info.FileName <- mspec
                         info.WorkingDirectory <- "."
-                        info.Arguments <- "--html " + tests.TestResultDir @@ "index.html " + repository.AppDir + ".dll") (TimeSpan.FromMinutes 5.0)
+                        info.Arguments <- "--html " + testResultDir @@ "index.html " + buildDir @@ appName + ".dll") (TimeSpan.FromMinutes 5.0)
                     if result <> 0 then failwithf "'mspec-clr4.exe' returned with a non-zero exit code"
 )
 
-Target "CreateNuget" (fun _ -> 
-    let repositoryFactory = new RepositoryFactory()
-    let repository = repositoryFactory.GetRepository
-    let artifacts = new Artifacts(repository.AppName, @"./bin/Release")
-    let eldersNuget = new EldersNuget(repository)
-    let release = new Release(repository, eldersNuget)
+Target "PrepareReleaseNotes" (fun _ ->
+    printfn "Loading release notes from %s" releaseNotes
+    let release = LoadReleaseNotes releaseNotes
+    let isNOTValid = (gitVer.NuGetVersionV2, release.NugetVersion) |> String.Equals |> not
 
-    release.CanRelease |> eldersNuget.CreateNuget artifacts
+    if isNOTValid then
+                    Console.ForegroundColor <- ConsoleColor.Red
+                    printfn "Unable to find release notes for version '%s'" gitVer.NuGetVersionV2
+                    Console.ForegroundColor <- ConsoleColor.White
+                    Environment.Exit(1)
 )
 
-Target "ReleaseLocal" (fun _ -> printfn "Release local")
+Target "PrepareNuGet" (fun _ ->
+    //  Exclude libraries which are part of the packages.config file only when nuget package is created.
+    let nugetPackagesFile = sourceDir @@ appName @@ "packages.config"
+    let dependencies = match File.Exists nugetPackagesFile with
+                        | true -> getDependencies nugetPackagesFile
+                        | _ -> []
+    let dependencyFiles = dependencies
+                          |> Seq.map(fun (name,ver) -> name + "." + ver)
+                          |> Seq.collect(fun pkgName -> !! ("./src/packages/*/" + pkgName + ".nupkg"))
+                          |> Seq.collect(fun pkg -> global.NuGet.ZipPackage(pkg).GetFiles())
+                          |> Seq.map(fun file -> "\\" + filename file.Path)
+                          |> fun gga -> Collections.Set(gga)
+                          |> Set.toList
+    
+    printfn "Nuget dependencies:"
+    dependencyFiles |> Seq.iter(fun file -> printfn "%s" file)
+    let excludePaths (pathsToExclude : string list) (path: string) = pathsToExclude |> List.exists (path.endswith StringComparison.OrdinalIgnoreCase)|> not
+    let exclude = excludePaths dependencyFiles
+
+    let buildDirList = Directory.GetDirectories buildDir
+
+    buildDirList
+    |> Seq.iter(fun dir ->
+        if dir.ToLowerInvariant().Contains "_published" then CopyDir nugetContentDir (dir @@ appName) allFiles
+        if dir.ToLowerInvariant().Contains "_tools" then CopyDir nugetToolsDir (dir @@ appName) allFiles)
+
+    let hasNonLibArtifacts = buildDirList |> Seq.exists(fun dir -> dir.ToLowerInvariant().Contains "_published" || dir.ToLowerInvariant().Contains "_tools")
+
+    if hasNonLibArtifacts |> not
+    then CopyDir nugetLibDir buildDir exclude
+
+    if Directory.Exists deploymentDir 
+    then CopyDir nugetToolsDir deploymentDir allFiles
+)
+
+Target "CreateNuget" (fun _ ->
+    printfn "Loading release notes from %s" releaseNotes
+    let release = LoadReleaseNotes releaseNotes
+    let nugetPackagesFile = sourceDir @@ appName @@ "packages.config"
+    let dependencies = match File.Exists nugetPackagesFile && appType.Equals "cli" |> not with
+                        | true -> getDependencies nugetPackagesFile
+                        | _ -> []
+
+    let nugetAccessKey = getBuildParamOrDefault "nugetkey" ""
+    let nugetPackageName = getBuildParamOrDefault "nugetPackageName" appName
+    let nuspecFile = sourceDir @@ appName @@ nugetPackageName + ".nuspec"
+    let shouldCreateNuspecFile = nuspecFile |> File.Exists |> not
+    let defaultNuspec = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+<package xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">
+  <metadata xmlns=\"http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd\">
+    <description>@description@</description>
+    <id>@project@</id>
+    <version>@build.number@</version>
+    <authors>@authors@</authors>
+    <language>en-US</language>
+    <summary>@summary@</summary>
+    <releaseNotes>@releaseNotes@</releaseNotes>
+    @dependencies@
+  </metadata>
+</package>"
+    if shouldCreateNuspecFile then
+                                WriteStringToFile false nuspecFile defaultNuspec
+    let nugetDoPublish = nugetAccessKey.Equals "" |> not
+    let nugetPublishUrl = getBuildParamOrDefault "nugetserver" "https://nuget.org"
+
+    //  Create/Publish the nuget package
+    NuGet (fun app ->
+        {app with
+            NoPackageAnalysis = true
+            Authors = appAuthors
+            Project = nugetPackageName
+            Description = appDescription
+            Version = gitVer.NuGetVersionV2
+            Summary = appSummary
+            ReleaseNotes = release.Notes |> toLines
+            Dependencies = dependencies
+            AccessKey = nugetAccessKey
+            Publish = nugetDoPublish
+            PublishUrl = nugetPublishUrl
+            ToolPath = nuget
+            OutputPath = nugetWorkDir
+            WorkingDir = nugetWorkDir
+        }) nuspecFile
+)
+
+Target "ReleaseLocal" (fun _ ->
+   printfn "Release local"
+)
 
 Target "Release" (fun _ ->
-    let repositoryFactory = new RepositoryFactory()
-    let repository = repositoryFactory.GetRepository
-    let artifacts = new Artifacts(repository.AppName, @"./bin/Release")
-    let eldersNuget = new EldersNuget(repository)
-    let release = new Release(repository, eldersNuget)
+    printfn "Initializing git version..."
+    let result = ExecProcessAndReturnMessages (fun info ->
+        info.FileName <- gitversion
+        info.WorkingDirectory <- "."
+        info.Arguments <- "/output json") (TimeSpan.FromMinutes 5.0)
+        
+    if result.ExitCode <> 0 then failwithf "'GitVersion.exe' returned with a non-zero exit code"
+    
+    let jsonResult = System.String.Concat(result.Messages)
+    
+    jsonResult |> deserialize<Version> |> fun ver -> gitVer <- ver
 
-    if release.CanRelease
-    then
-        StageAll ""
-        let notes = String.concat "; " repository.ReleaseNotes.Notes
-        Commit "" (sprintf "%s" notes)
-        Branches.push ""
+    printfn "Loading release notes from %s" releaseNotes
+    let release = LoadReleaseNotes releaseNotes
+    StageAll ""
+    let notes = String.concat "; " release.Notes
+    Commit "" (sprintf "%s" notes)
+    Branches.push ""
 
-        if release.IsCustomGitVersionTag
-        then
-            let tag = repository.AppName + "@" + repository.GitVersion.NuGetVersionV2;
-            printfn "Assign version %s as git tag" tag
-            Branches.tag "" tag
-            Branches.pushTag "" "origin" tag
-        else
-            let backwardtag = repository.GitVersion.NuGetVersionV2;
-            printfn "Assign version %s as git tag" backwardtag
-            Branches.tag "" backwardtag
-            Branches.pushTag "" "origin" backwardtag
-    else
-        printfn "NOT RELEASED!"
+    printfn "Assign version %s as git tag" gitVer.NuGetVersionV2
+    Branches.tag "" gitVer.NuGetVersionV2
+    Branches.pushTag "" "origin" gitVer.NuGetVersionV2
 )
 
-"Build"
+"UpdateAssemblyInfo"
+    ==> "Build"
     ==> "RunTests"
+    ==> "PrepareReleaseNotes"
+    ==> "PrepareNuGet"
     ==> "CreateNuget"
     ==> "ReleaseLocal"
-    ==> "Release"
 
 RunParameterTargetOrDefault "target" "ReleaseLocal"
