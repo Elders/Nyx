@@ -1,3 +1,6 @@
+#### 0.12.5 - 01.11.2016
+* Should be stable now
+
 #### 0.12.4 - 09.10.2016
 * Uses double build script
 

@@ -130,7 +130,7 @@ type EldersNuget(repository:Repository) =
     let canPublishPackage gitVersion =
         let version = gitVersion.NuGetVersionV2
         let prerelease = if version.Contains("beta") then " -prerelease" else ""
-        let args = "/c " + nuget + " list " + repository.AppName + prerelease;
+        let args = "/c " + nuget + " list " + nugetPackageName + prerelease;
         let result = ExecProcessAndReturnMessages (fun info ->
                                 info.FileName <- "cmd"
                                 info.Arguments <- args) (TimeSpan.FromMinutes 20.0)
@@ -141,7 +141,7 @@ type EldersNuget(repository:Repository) =
         |> Seq.map(fun split -> Regex.Split(split, " "))
         |> Seq.map(fun q ->
             printfn "%s %s" q.[0] q.[1]
-            (q.[0].Equals(repository.AppName, StringComparison.OrdinalIgnoreCase) && q.[1] < version) || (q.[0].Equals("No", StringComparison.OrdinalIgnoreCase) && q.[1].Equals("packages", StringComparison.OrdinalIgnoreCase)))
+            (q.[0].Equals(nugetPackageName, StringComparison.OrdinalIgnoreCase) && q.[1] < version) || (q.[0].Equals("No", StringComparison.OrdinalIgnoreCase) && q.[1].Equals("packages", StringComparison.OrdinalIgnoreCase)))
         |> Seq.tryFind(fun e -> e.Equals(true))
 
     let getNugetPackageDependencies =
@@ -217,6 +217,7 @@ type EldersNuget(repository:Repository) =
                 WorkingDir = nugetWorkDir
             }) getNuspecFile
 
+    member this.PackageName = nugetPackageName
     member this.CanPublishPackage gitversion = canPublishPackage gitversion
     member this.Clean() = CleanDirs [nugetWorkDir;]
     member this.CreateNuget artifacts release =
@@ -238,8 +239,10 @@ type Release(repository:Repository, nuget:EldersNuget) =
 
         if isValidRelease then
             let canPublishNuget = (nuget.CanPublishPackage repository.GitVersion).IsSome
+            printfn "Can publish nuget => %b" canPublishNuget
             let nugetAccessKey = getBuildParamOrDefault "nugetkey" ""
             canRelease <- nugetAccessKey.Equals "" |> not && canPublishNuget
+            printfn "Can release => %b" canRelease
             if canRelease |> not then
                 if repository.GitVersion.NuGetVersionV2.Equals repository.ReleaseNotes.NugetVersion |> not then
                     if nugetAccessKey.Equals "" then
@@ -254,7 +257,6 @@ type Release(repository:Repository, nuget:EldersNuget) =
     
     member this.IsValidRelease = isValidRelease
     member this.CanRelease = canRelease
-    member this.IsCustomGitVersionTag = String.IsNullOrEmpty gitversiontag |> not
 
 type Tests(appInfo:AppInfo) =
     let testResultDir = "./bin/tests" @@ appInfo.Name
@@ -340,7 +342,7 @@ Target "RunTests" (fun _ ->
                     let result = ExecProcess (fun info ->
                         info.FileName <- tests.MSpec
                         info.WorkingDirectory <- "."
-                        info.Arguments <- "--html " + tests.TestResultDir @@ "index.html " + repository.AppDir + ".dll") (TimeSpan.FromMinutes 5.0)
+                        info.Arguments <- "--html " + tests.TestResultDir @@ "index.html " + artifacts.BuildDir @@ repository.AppName + ".dll") (TimeSpan.FromMinutes 5.0)
                     if result <> 0 then failwithf "'mspec-clr4.exe' returned with a non-zero exit code"
 )
 
@@ -370,17 +372,10 @@ Target "Release" (fun _ ->
         Commit "" (sprintf "%s" notes)
         Branches.push ""
 
-        if release.IsCustomGitVersionTag
-        then
-            let tag = repository.AppName + "@" + repository.GitVersion.NuGetVersionV2;
-            printfn "Assign version %s as git tag" tag
-            Branches.tag "" tag
-            Branches.pushTag "" "origin" tag
-        else
-            let backwardtag = repository.GitVersion.NuGetVersionV2;
-            printfn "Assign version %s as git tag" backwardtag
-            Branches.tag "" backwardtag
-            Branches.pushTag "" "origin" backwardtag
+        let tag = eldersNuget.PackageName + "@" + repository.GitVersion.NuGetVersionV2;
+        printfn "Assign version %s as git tag" tag
+        Branches.tag "" tag
+        Branches.pushTag "" "origin" tag
     else
         printfn "NOT RELEASED!"
 )
