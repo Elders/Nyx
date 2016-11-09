@@ -1,4 +1,7 @@
-#### 0.12.6 - 01.11.2016
+#### 0.12.7 - 09.11.2016
+* Fixes version comparison bug
+
+#### 0.12.6 - 09.11.2016
 * Fixes version comparison bug
 
 #### 0.12.5 - 01.11.2016
