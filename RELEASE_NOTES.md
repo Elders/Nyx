@@ -1,3 +1,6 @@
+#### 0.12.6 - 01.11.2016
+* Fixes version comparison bug
+
 #### 0.12.5 - 01.11.2016
 * Should be stable now
 

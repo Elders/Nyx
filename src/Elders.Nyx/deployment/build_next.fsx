@@ -141,7 +141,7 @@ type EldersNuget(repository:Repository) =
         |> Seq.map(fun split -> Regex.Split(split, " "))
         |> Seq.map(fun q ->
             printfn "%s %s" q.[0] q.[1]
-            (q.[0].Equals(nugetPackageName, StringComparison.OrdinalIgnoreCase) && q.[1] < version) || (q.[0].Equals("No", StringComparison.OrdinalIgnoreCase) && q.[1].Equals("packages", StringComparison.OrdinalIgnoreCase)))
+            (q.[0].Equals(nugetPackageName, StringComparison.OrdinalIgnoreCase) && String.Compare(q.[1], version, StringComparison.OrdinalIgnoreCase) > 0) || (q.[0].Equals("No", StringComparison.OrdinalIgnoreCase) && q.[1].Equals("packages", StringComparison.OrdinalIgnoreCase)))
         |> Seq.tryFind(fun e -> e.Equals(true))
 
     let getNugetPackageDependencies =
