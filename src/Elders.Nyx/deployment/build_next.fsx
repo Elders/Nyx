@@ -115,7 +115,13 @@ type RepositoryFactory() =
 
     let appType = getBuildParamOrDefault "appType" conventionAppType
     let sourceDir = "./src"
-    let defaultReleaseNotes = sourceDir @@ appInfo.Name @@ @"RELEASE_NOTES.md"
+    let appDir = sourceDir @@ appInfo.Name
+    let appReleaseNotesPath = appDir @@ appInfo.Name + ".rn.md"
+    let defaultReleaseNotesPath = appDir @@ "RELEASE_NOTES.md"
+    let defaultReleaseNotes = match File.Exists appReleaseNotesPath with
+                              | true -> appReleaseNotesPath
+                              | _ -> defaultReleaseNotesPath
+
     let releaseNotes = getBuildParamOrDefault "appReleaseNotes" defaultReleaseNotes
     
     member this.GetRepository = new Repository(appInfo, appType, sourceDir, releaseNotes)

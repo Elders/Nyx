@@ -1,3 +1,6 @@
+#### 0.12.8 - 18.11.2016
+* Allows you to use `src\appname\appname.rn.md` for release notes by default
+
 #### 0.12.7 - 09.11.2016
 * Fixes version comparison bug
 
