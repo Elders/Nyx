@@ -1,7 +1,7 @@
 ﻿#I @"../../FAKE/tools/"
 #r @"../../FAKE/tools/FakeLib.dll"
 #r @"../../FAKE/tools/Fake.Deploy.Lib.dll"
-#r @"../../Nuget.Core/lib/net40-Client/NuGet.Core.dll"
+#r @"../../FAKE/tools/ICSharpCode.SharpZipLib.dll"
 
 open System
 open System.Collections.Generic
@@ -15,6 +15,8 @@ open Fake.ProcessHelper
 open Fake.FileHelper
 open Fake.Json
 open System.Text.RegularExpressions
+open ICSharpCode.SharpZipLib.Zip
+open ICSharpCode.SharpZipLib.Core
 
 type GitVersion = {
     Major : int
@@ -175,13 +177,21 @@ type EldersNuget(repository:Repository) =
         if shouldCreateNuspecFile then WriteStringToFile false nuspecFile defaultNuspec
         nuspecFile
 
+    let getFiles (zipFilePath : string) = 
+        let zipFile = new ZipFile(zipFilePath)
+        seq { 
+            for ze in zipFile do
+                let entry = ze :?> ZipEntry
+                yield entry.Name
+        }
+        |> Seq.map(fun file -> "\\" + filename file)
+        
     let prepareNugetPackage(artifacts:Artifacts) =
         //  Exclude libraries which are part of the packages.config file only when nuget package is created.
         let dependencyFiles = getNugetPackageDependencies
                               |> Seq.map(fun (name,ver) -> name + "." + ver)
                               |> Seq.collect(fun pkgName -> !! ("./src/packages/*/" + pkgName + ".nupkg"))
-                              |> Seq.collect(fun pkg -> global.NuGet.ZipPackage(pkg).GetFiles())
-                              |> Seq.map(fun file -> "\\" + filename file.Path)
+                              |> Seq.collect(fun pkg -> getFiles(pkg))
                               |> fun gga -> Collections.Set(gga)
                               |> Set.toSeq
         printfn "Nuget dependencies:"

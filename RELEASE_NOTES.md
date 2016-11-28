@@ -1,3 +1,6 @@
+#### 0.12.9 - 28.11.2016
+* Removes the dependency for Nuget.Core
+
 #### 0.12.8 - 18.11.2016
 * Allows you to use `src\appname\appname.rn.md` for release notes by default
 
