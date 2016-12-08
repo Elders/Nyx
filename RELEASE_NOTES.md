@@ -1,3 +1,6 @@
+#### 0.12.10 - 08.12.2016
+* Does not include `.pdb` file in nuget packages
+
 #### 0.12.9 - 28.11.2016
 * Removes the dependency for Nuget.Core
 

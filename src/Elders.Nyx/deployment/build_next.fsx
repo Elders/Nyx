@@ -197,7 +197,7 @@ type EldersNuget(repository:Repository) =
         printfn "Nuget dependencies:"
         dependencyFiles |> Seq.iter(fun file -> printfn "%s" file)
         let excludePaths (pathsToExclude : string seq) (path: string) = pathsToExclude |> Seq.exists (path.endswith StringComparison.OrdinalIgnoreCase)|> not
-        let exclude = excludePaths dependencyFiles
+        let exclude = fun file -> (excludePaths dependencyFiles file) && (FileHelper.hasExt ".pdb" file |> not)
         let buildDirList = Directory.GetDirectories artifacts.BuildDir
         buildDirList
         |> Seq.iter(fun dir ->

@@ -202,7 +202,7 @@ Target "PrepareNuGet" (fun _ ->
     printfn "Nuget dependencies:"
     dependencyFiles |> Seq.iter(fun file -> printfn "%s" file)
     let excludePaths (pathsToExclude : string list) (path: string) = pathsToExclude |> List.exists (path.endswith StringComparison.OrdinalIgnoreCase)|> not
-    let exclude = excludePaths dependencyFiles
+    let exclude = fun file -> (excludePaths dependencyFiles file) && (FileHelper.hasExt ".pdb" file |> not)
 
     let buildDirList = Directory.GetDirectories buildDir
 
