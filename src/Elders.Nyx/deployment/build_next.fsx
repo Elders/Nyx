@@ -198,12 +198,13 @@ type EldersNuget(repository:Repository) =
         dependencyFiles |> Seq.iter(fun file -> printfn "%s" file)
         let excludePaths (pathsToExclude : string seq) (path: string) = pathsToExclude |> Seq.exists (path.endswith StringComparison.OrdinalIgnoreCase)|> not
         let exclude = fun file -> (excludePaths dependencyFiles file) && (FileHelper.hasExt ".pdb" file |> not)
+        let onlyDll = fun file -> (FileHelper.hasExt ".pdb" file |> not) && (FileHelper.hasExt ".xml" file |> not)
         let buildDirList = Directory.GetDirectories artifacts.BuildDir
         buildDirList
         |> Seq.iter(fun dir ->
-            if dir.ToLowerInvariant().Contains "_published" then CopyDir nugetContentDir (dir @@ repository.AppName) allFiles
-            if dir.ToLowerInvariant().Contains "_tools" then CopyDir nugetToolsDir (dir @@ repository.AppName) allFiles)
-        let hasNonLibArtifacts = buildDirList |> Seq.exists(fun dir -> dir.ToLowerInvariant().Contains "_published" || dir.ToLowerInvariant().Contains "_tools")
+            if dir.ToLower().Contains "_published" then CopyDir nugetContentDir (dir @@ repository.AppName) onlyDll
+            if dir.ToLower().Contains "_tools" then CopyDir nugetToolsDir (dir @@ repository.AppName) allFiles)
+        let hasNonLibArtifacts = buildDirList |> Seq.exists(fun dir -> dir.ToLower().Contains "_published" || dir.ToLower().Contains "_tools")
         if hasNonLibArtifacts |> not
         then CopyDir nugetLibDir artifacts.BuildDir exclude
         if Directory.Exists repository.DeploymentDir 

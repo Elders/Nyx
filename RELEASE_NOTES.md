@@ -1,3 +1,6 @@
+#### 0.12.11 - 29.03.2017
+* Does not include `.pdb` and `.xml` file in deploy packages
+
 #### 0.12.10 - 08.12.2016
 * Does not include `.pdb` file in nuget packages
 
