@@ -47,7 +47,7 @@ type AppInfo(name, summary, description, authors) =
     member this.Sumarry = summary
     member this.Description = description
     member this.Authors = authors
-    member this.UpdateAssemblyInfo(assemblyInfoFile, getGitVersion) = 
+    member this.UpdateAssemblyInfo(assemblyInfoFile, getGitVersion) =
         CreateCSharpAssemblyInfo assemblyInfoFile
            [Attribute.Title name
             Attribute.Description description
@@ -83,7 +83,7 @@ type Repository(appInfo:AppInfo, appType, sourceDir, releaseNotes) =
 
     let appDir = sourceDir @@ appInfo.Name
     let assemblyInfoFile = appDir @@ "Properties/AssemblyInfo.cs"
-    
+
 
     member this.AppInfo = appInfo
     member this.AppName = appName
@@ -116,16 +116,22 @@ type RepositoryFactory() =
                               | _ -> "lib"
 
     let appType = getBuildParamOrDefault "appType" conventionAppType
-    let sourceDir = "./src"
+    let sourceDir = ".\\src"
     let appDir = sourceDir @@ appInfo.Name
-    let appReleaseNotesPath = appDir @@ appInfo.Name + ".rn.md"
-    let defaultReleaseNotesPath = appDir @@ "RELEASE_NOTES.md"
-    let defaultReleaseNotes = match File.Exists appReleaseNotesPath with
-                              | true -> appReleaseNotesPath
-                              | _ -> defaultReleaseNotesPath
-
-    let releaseNotes = getBuildParamOrDefault "appReleaseNotes" defaultReleaseNotes
-    
+    let releaseNotes =
+        let appReleaseNotesPath = appDir @@ appInfo.Name + ".rn.md"
+        let legacyReleaseNotesPath = appDir @@ "RELEASE_NOTES.md"
+        let activeReleaseNotesPath = match File.Exists legacyReleaseNotesPath with
+                                        | true -> legacyReleaseNotesPath
+                                        | _ -> appReleaseNotesPath
+        let releaseNotesPath = getBuildParamOrDefault "appReleaseNotes" activeReleaseNotesPath
+        let defaultReleaseNotesContent = "#### 0.1.0 - 31.12.2000
+* Initial Release"
+        let shouldCreateReleaseNotesFile = releaseNotesPath |> File.Exists |> not
+        if shouldCreateReleaseNotesFile then
+            printfn "Release Notes file was not found. Automatically creating %s" releaseNotesPath
+            WriteStringToFile false releaseNotesPath defaultReleaseNotesContent
+        releaseNotesPath
     member this.GetRepository = new Repository(appInfo, appType, sourceDir, releaseNotes)
 
 type EldersNuget(repository:Repository) =
@@ -145,7 +151,7 @@ type EldersNuget(repository:Repository) =
         if result.ExitCode <> 0 then failwithf "%s returned with a non-zero exit code" args
         printfn "Found %i packages." result.Messages.Count
         Console.WriteLine "------------------------"
-        result.Messages 
+        result.Messages
         |> Seq.map(fun split -> Regex.Split(split, " "))
         |> Seq.map(fun q ->
             printfn "%s %s" q.[0] q.[1]
@@ -177,15 +183,15 @@ type EldersNuget(repository:Repository) =
         if shouldCreateNuspecFile then WriteStringToFile false nuspecFile defaultNuspec
         nuspecFile
 
-    let getFiles (zipFilePath : string) = 
+    let getFiles (zipFilePath : string) =
         let zipFile = new ZipFile(zipFilePath)
-        seq { 
+        seq {
             for ze in zipFile do
                 let entry = ze :?> ZipEntry
                 yield entry.Name
         }
         |> Seq.map(fun file -> "\\" + filename file)
-        
+
     let prepareNugetPackage(artifacts:Artifacts) =
         //  Exclude libraries which are part of the packages.config file only when nuget package is created.
         let dependencyFiles = getNugetPackageDependencies
@@ -207,7 +213,7 @@ type EldersNuget(repository:Repository) =
         let hasNonLibArtifacts = buildDirList |> Seq.exists(fun dir -> dir.ToLower().Contains "_published" || dir.ToLower().Contains "_tools")
         if hasNonLibArtifacts |> not
         then CopyDir nugetLibDir artifacts.BuildDir exclude
-        if Directory.Exists repository.DeploymentDir 
+        if Directory.Exists repository.DeploymentDir
         then CopyDir nugetToolsDir repository.DeploymentDir allFiles
 
     let createNuget release =
@@ -250,7 +256,7 @@ let ErrorAndExit(message:string) =
 type Release(repository:Repository, nuget:EldersNuget) =
     let isValidRelease = (repository.ReleaseNotes.NugetVersion, repository.GitVersion.NuGetVersionV2) |> String.Equals
 
-    let canRelease = 
+    let canRelease =
         printfn "GitVer: %s  |  ReleaseNotesVer: %s" repository.GitVersion.NuGetVersionV2 repository.ReleaseNotes.NugetVersion
         let mutable canRelease = false
 
@@ -271,7 +277,7 @@ type Release(repository:Repository, nuget:EldersNuget) =
         canRelease
 
     let gitversiontag = getBuildParamOrDefault "gitvertag" ""
-    
+
     member this.IsValidRelease = isValidRelease
     member this.CanRelease = canRelease
 
@@ -282,7 +288,7 @@ type Tests(appInfo:AppInfo) =
     member this.TestResultDir = testResultDir
     member this.MSpec = mspec
 
-Target "Clean" (fun _ -> 
+Target "Clean" (fun _ ->
     CleanDirs [@"./bin"]
 )
 
@@ -330,7 +336,7 @@ Target "Build" (fun _ ->
     repository.AppInfo.UpdateAssemblyInfo(repository.AssemblyInfoFile, repository.GitVersion)
 
     let appBuildFile = sourceDir @@ appName @@ "build.cmd"
-    if File.Exists appBuildFile 
+    if File.Exists appBuildFile
     then
         let result = ExecProcess (fun info ->
                 info.FileName <- "cmd"
@@ -363,7 +369,7 @@ Target "RunTests" (fun _ ->
                     if result <> 0 then failwithf "'mspec-clr4.exe' returned with a non-zero exit code"
 )
 
-Target "CreateNuget" (fun _ -> 
+Target "CreateNuget" (fun _ ->
     let repositoryFactory = new RepositoryFactory()
     let repository = repositoryFactory.GetRepository
     let artifacts = new Artifacts(repository.AppName, @"./bin/Release")
