@@ -1,3 +1,6 @@
+#### 0.12.12 - 04.04.2017
+* Automatically creates release_notes.md and gitversion.yml file if missing
+
 #### 0.12.11 - 29.03.2017
 * Does not include `.pdb` and `.xml` file in deploy packages
 

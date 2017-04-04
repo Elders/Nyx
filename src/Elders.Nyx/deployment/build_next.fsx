@@ -68,9 +68,12 @@ type Repository(appInfo:AppInfo, appType, sourceDir, releaseNotes) =
 
     let getGitVersion =
         let gitversionconfig = sourceDir @@ appName @@ "gitversion.yml"
-        let workingDir = match File.Exists gitversionconfig with
-                            | true -> sourceDir @@ appName
-                            | _ -> "."
+        let shouldCreateGitVersionConfig = gitversionconfig |> File.Exists |> not
+        if shouldCreateGitVersionConfig then
+            printfn "gitversion.yml file was not found. Automatically creating %s" gitversionconfig
+            let gitVersionConfigContent = "tag-prefix: '" + appName + "@'"
+            WriteStringToFile false gitversionconfig gitVersionConfigContent
+        let workingDir = sourceDir @@ appName
         printfn "GitVersion working dir is %s" workingDir
         let gitversion = environVar "GITVERSION"
         let result = ExecProcessAndReturnMessages (fun info ->
@@ -125,7 +128,8 @@ type RepositoryFactory() =
                                         | true -> legacyReleaseNotesPath
                                         | _ -> appReleaseNotesPath
         let releaseNotesPath = getBuildParamOrDefault "appReleaseNotes" activeReleaseNotesPath
-        let defaultReleaseNotesContent = "#### 0.1.0 - 31.12.2000
+
+        let defaultReleaseNotesContent = "#### 0.1.0 - " + System.DateTime.Now.ToString("dd.MM.yyyy") + "
 * Initial Release"
         let shouldCreateReleaseNotesFile = releaseNotesPath |> File.Exists |> not
         if shouldCreateReleaseNotesFile then
@@ -167,18 +171,18 @@ type EldersNuget(repository:Repository) =
     let getNuspecFile =
         let nuspecFile = repository.AppDir @@ nugetPackageName + ".nuspec"
         let defaultNuspec = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
-            <package xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">
-              <metadata xmlns=\"http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd\">
-                <description>@description@</description>
-                <id>@project@</id>
-                <version>@build.number@</version>
-                <authors>@authors@</authors>
-                <language>en-US</language>
-                <summary>@summary@</summary>
-                <releaseNotes>@releaseNotes@</releaseNotes>
-                @dependencies@
-              </metadata>
-            </package>"
+<package xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">
+  <metadata xmlns=\"http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd\">
+    <description>@description@</description>
+    <id>@project@</id>
+    <version>@build.number@</version>
+    <authors>@authors@</authors>
+    <language>en-US</language>
+    <summary>@summary@</summary>
+    <releaseNotes>@releaseNotes@</releaseNotes>
+    @dependencies@
+  </metadata>
+</package>"
         let shouldCreateNuspecFile = nuspecFile |> File.Exists |> not
         if shouldCreateNuspecFile then WriteStringToFile false nuspecFile defaultNuspec
         nuspecFile
