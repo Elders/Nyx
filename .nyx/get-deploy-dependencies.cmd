@@ -7,7 +7,9 @@ SET FAKE=bin\FAKE\tools\Fake.exe
 echo Downloading FAKE...
 %NUGET% "install" "FAKE" "-OutputDirectory" "bin" "-ExcludeVersion" "-Version" "4.50.0"
 
-for /f %%i in ("%0") do set curpath=%%~dpi
+for /f %%i in ("%~dp0..") do set curpath=%%~fi
 cd /d %curpath%
+
+echo %curpath%
 
 xcopy ..\content . /D /Y /I /s
