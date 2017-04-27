@@ -1,3 +1,6 @@
+#### 0.12.13 - 27.04.2017
+* Removes custom nuget source loading
+
 #### 0.12.12 - 04.04.2017
 * Automatically creates release_notes.md and gitversion.yml file if missing
 

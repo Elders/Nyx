@@ -299,11 +299,9 @@ Target "Clean" (fun _ ->
 Target "RestoreNugetPackages" (fun _ ->
     let nuget = environVar "NUGET"
     let packagesDir = @"./src/packages"
-    let nugetSources = environVarOrDefault "NUGET_SOURCES" "https://www.nuget.org/api/v2"
     !! "./src/*/packages.config"
     |> Seq.iter (RestorePackage (fun p ->
         { p with
-            Sources = nugetSources :: "https://www.nuget.org/api/v2" :: p.Sources
             ToolPath = nuget
             OutputPath = packagesDir }))
 )
