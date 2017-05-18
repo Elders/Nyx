@@ -71,7 +71,7 @@ type Repository(appInfo:AppInfo, appType, sourceDir, releaseNotes) =
         let shouldCreateGitVersionConfig = gitversionconfig |> File.Exists |> not
         if shouldCreateGitVersionConfig then
             printfn "gitversion.yml file was not found. Automatically creating %s" gitversionconfig
-            let gitVersionConfigContent = "tag-prefix: '" + appName + "@'"
+            let gitVersionConfigContent = "tag-prefix: '" + getBuildParamOrDefault "nugetPackageName" appName + "@'"
             WriteStringToFile false gitversionconfig gitVersionConfigContent
         let workingDir = sourceDir @@ appName
         printfn "GitVersion working dir is %s" workingDir

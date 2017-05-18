@@ -1,3 +1,6 @@
+#### 0.12.14 - 18.05.2017
+* Fix gitversion.yml
+
 #### 0.12.13 - 27.04.2017
 * Removes custom nuget source loading
 
