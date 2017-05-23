@@ -63,18 +63,18 @@ type System.String with member x.endswith (comp:System.StringComparison) str = x
 type Repository(appInfo:AppInfo, appType, sourceDir, releaseNotes) =
     let appName = appInfo.Name
     let getReleaseNotes =
-        printfn "Loading release notes from %s" releaseNotes
+        printfn "[nyx] Loading release notes from %s" releaseNotes
         LoadReleaseNotes releaseNotes
 
     let getGitVersion =
         let gitversionconfig = sourceDir @@ appName @@ "gitversion.yml"
         let shouldCreateGitVersionConfig = gitversionconfig |> File.Exists |> not
         if shouldCreateGitVersionConfig then
-            printfn "gitversion.yml file was not found. Automatically creating %s" gitversionconfig
+            printfn "[nyx] gitversion.yml file was not found. Automatically creating %s" gitversionconfig
             let gitVersionConfigContent = "tag-prefix: '" + getBuildParamOrDefault "nugetPackageName" appName + "@'"
             WriteStringToFile false gitversionconfig gitVersionConfigContent
         let workingDir = sourceDir @@ appName
-        printfn "GitVersion working dir is %s" workingDir
+        printfn "[nyx] GitVersion working dir is %s" workingDir
         let gitversion = environVar "GITVERSION"
         let result = ExecProcessAndReturnMessages (fun info ->
             info.FileName <- gitversion
@@ -103,6 +103,7 @@ type Artifacts(appName, artifactsDir) =
     member this.WebsiteDir = this.BuildDir @@ "_publishedWebsites" @@ appName
     member this.MsiDir = this.BuildDir @@ "_publishedMsi" @@ appName
     member this.ToolDir = this.BuildDir @@ "_tools" @@ appName
+    member this.IntTestsDir = this.BuildDir @@ "_publishedTests" @@ appName
     member this.Clean() = CleanDirs [this.BuildDir;]
 
 type RepositoryFactory() =
@@ -133,7 +134,7 @@ type RepositoryFactory() =
 * Initial Release"
         let shouldCreateReleaseNotesFile = releaseNotesPath |> File.Exists |> not
         if shouldCreateReleaseNotesFile then
-            printfn "Release Notes file was not found. Automatically creating %s" releaseNotesPath
+            printfn "[nyx] Release Notes file was not found. Automatically creating %s" releaseNotesPath
             WriteStringToFile false releaseNotesPath defaultReleaseNotesContent
         releaseNotesPath
     member this.GetRepository = new Repository(appInfo, appType, sourceDir, releaseNotes)
@@ -153,12 +154,12 @@ type EldersNuget(repository:Repository) =
                                 info.FileName <- "cmd"
                                 info.Arguments <- args) (TimeSpan.FromMinutes 20.0)
         if result.ExitCode <> 0 then failwithf "%s returned with a non-zero exit code" args
-        printfn "Found %i packages." result.Messages.Count
+        printfn "[nyx] Found %i packages." result.Messages.Count
         Console.WriteLine "------------------------"
         result.Messages
         |> Seq.map(fun split -> Regex.Split(split, " "))
         |> Seq.map(fun q ->
-            printfn "%s %s" q.[0] q.[1]
+            printfn "[nyx] %s %s" q.[0] q.[1]
             (q.[0].Equals(nugetPackageName, StringComparison.OrdinalIgnoreCase) && SemVerHelper.parse(q.[1]) < SemVerHelper.parse(version)) || (q.[0].Equals("No", StringComparison.OrdinalIgnoreCase) && q.[1].Equals("packages", StringComparison.OrdinalIgnoreCase)))
         |> Seq.tryFind(fun e -> e.Equals(true))
 
@@ -197,15 +198,15 @@ type EldersNuget(repository:Repository) =
         |> Seq.map(fun file -> "\\" + filename file)
 
     let prepareNugetPackage(artifacts:Artifacts) =
-        //  Exclude libraries which are part of the packages.config file only when nuget package is created.
+        //Exclude libraries which are part of the packages.config file only when lib nuget package is created
         let dependencyFiles = getNugetPackageDependencies
                               |> Seq.map(fun (name,ver) -> name + "." + ver)
                               |> Seq.collect(fun pkgName -> !! ("./src/packages/*/" + pkgName + ".nupkg"))
                               |> Seq.collect(fun pkg -> getFiles(pkg))
                               |> fun gga -> Collections.Set(gga)
                               |> Set.toSeq
-        printfn "Nuget dependencies:"
-        dependencyFiles |> Seq.iter(fun file -> printfn "%s" file)
+        printfn "[nyx] Nuget dependencies:"
+        dependencyFiles |> Seq.iter(fun file -> printfn "[nyx] %s" file)
         let excludePaths (pathsToExclude : string seq) (path: string) = pathsToExclude |> Seq.exists (path.endswith StringComparison.OrdinalIgnoreCase)|> not
         let exclude = fun file -> (excludePaths dependencyFiles file) && (FileHelper.hasExt ".pdb" file |> not)
         let onlyDll = fun file -> (FileHelper.hasExt ".pdb" file |> not) && (FileHelper.hasExt ".xml" file |> not)
@@ -223,9 +224,8 @@ type EldersNuget(repository:Repository) =
     let createNuget release =
         let nugetAccessKey = getBuildParamOrDefault "nugetkey" ""
         let nugetPublishUrl = getBuildParamOrDefault "nugetserver" "https://www.nuget.org/api/v2/package"
-        if release then printfn "Pushing %s to %s ..." nugetPackageName nugetPublishUrl
+        if release then printfn "[nyx] Pushing %s to %s ..." nugetPackageName nugetPublishUrl
 
-        //  Create/Publish the nuget package
         NuGet (fun app ->
             {app with
                 NoPackageAnalysis = true
@@ -253,7 +253,6 @@ type EldersNuget(repository:Repository) =
 
 let ErrorAndExit(message:string) =
     Console.ForegroundColor <- ConsoleColor.Red
-    printfn "Unable to release because nuget access key is missing"
     Console.ForegroundColor <- ConsoleColor.White
     Environment.Exit(1)
 
@@ -261,26 +260,24 @@ type Release(repository:Repository, nuget:EldersNuget) =
     let isValidRelease = (repository.ReleaseNotes.NugetVersion, repository.GitVersion.NuGetVersionV2) |> String.Equals
 
     let canRelease =
-        printfn "GitVer: %s  |  ReleaseNotesVer: %s" repository.GitVersion.NuGetVersionV2 repository.ReleaseNotes.NugetVersion
+        printfn "[nyx] GitVer: %s  |  ReleaseNotesVer: %s" repository.GitVersion.NuGetVersionV2 repository.ReleaseNotes.NugetVersion
         let mutable canRelease = false
 
         if isValidRelease then
             let canPublishNuget = (nuget.CanPublishPackage repository.GitVersion).IsSome
-            printfn "Can publish nuget => %b" canPublishNuget
+            printfn "[nyx] Can publish nuget => %b" canPublishNuget
             let nugetAccessKey = getBuildParamOrDefault "nugetkey" ""
             canRelease <- nugetAccessKey.Equals "" |> not && canPublishNuget
-            printfn "Can release => %b" canRelease
+            printfn "[nyx] Can release => %b" canRelease
             if canRelease |> not then
                 if repository.GitVersion.NuGetVersionV2.Equals repository.ReleaseNotes.NugetVersion |> not then
                     if nugetAccessKey.Equals "" then
-                        ErrorAndExit "Unable to release because nuget access key is missing"
+                        ErrorAndExit "[nyx] Unable to release because nuget access key is missing"
                     if canPublishNuget |> not then
-                        ErrorAndExit "Unable to release because this version is already released or lower than the currently release version"
+                        ErrorAndExit "[nyx] Unable to release because this version is already released or it is lower than the currently release version"
         else
-            printfn "Regular build without release. Package will not be published. If you want to publish a release both versions should match => GitVer: %s  |  ReleaseNotesVer: %s" repository.GitVersion.NuGetVersionV2 repository.ReleaseNotes.NugetVersion
+            printfn "[nyx] Regular build without release. Package will not be published. If you want to publish a release both versions should match => GitVer: %s  |  ReleaseNotesVer: %s" repository.GitVersion.NuGetVersionV2 repository.ReleaseNotes.NugetVersion
         canRelease
-
-    let gitversiontag = getBuildParamOrDefault "gitvertag" ""
 
     member this.IsValidRelease = isValidRelease
     member this.CanRelease = canRelease
@@ -311,7 +308,7 @@ Target "RestoreBowerPackages" (fun _ ->
     |> Seq.iter (fun config ->
         config.Replace("package.json", "")
         |> fun cfgDir ->
-            printf "Bower working dir: %s" cfgDir
+            printf "[nyx] Bower working dir: %s" cfgDir
             let result = ExecProcess (fun info ->
                             info.FileName <- "cmd"
                             info.WorkingDirectory <- cfgDir
@@ -331,8 +328,9 @@ Target "Build" (fun _ ->
     let sourceDir = repository.SourceDir
     let msiDir = artifacts.MsiDir
     let toolDir = artifacts.ToolDir
+    let intTestsDir = artifacts.IntTestsDir
 
-    printfn "Creating build artifacts directory..."
+    printfn "[nyx] Creating build artifacts directory..."
     CreateDir buildDir
 
     repository.AppInfo.UpdateAssemblyInfo(repository.AssemblyInfoFile, repository.GitVersion)
@@ -349,6 +347,7 @@ Target "Build" (fun _ ->
     match repository.AppType with
     | "msi" -> sourceDir @@ appName + ".sln" |> fun dir -> !!dir |> MSBuildRelease msiDir "Build" |> Log "Build-Output: "
     | "cli" -> sourceDir @@ appName @@ appName + ".csproj" |> fun dir -> !!dir |> MSBuildRelease toolDir "Build" |> Log "Build-Output: "
+    | "int-tests" -> sourceDir @@ appName @@ appName + ".csproj" |> fun dir -> !!dir |> MSBuildRelease intTestsDir "Build" |> Log "Build-Output: "
     | _ -> sourceDir @@ appName @@ appName + ".csproj" |> fun dir -> !!dir |> MSBuildRelease buildDir "Build" |> Log "Build-Output: "
 )
 
@@ -361,7 +360,6 @@ Target "RunTests" (fun _ ->
     let tests = new Tests(repository.AppInfo)
 
     let isTests = (repository.AppType, "tests") |> String.Equals
-
     if isTests then
                     CreateDir tests.TestResultDir
                     let result = ExecProcess (fun info ->
@@ -381,7 +379,7 @@ Target "CreateNuget" (fun _ ->
     release.CanRelease |> eldersNuget.CreateNuget artifacts
 )
 
-Target "ReleaseLocal" (fun _ -> printfn "Release local")
+Target "ReleaseLocal" (fun _ -> printfn "[nyx] Release local")
 
 Target "Release" (fun _ ->
     let repositoryFactory = new RepositoryFactory()
@@ -398,11 +396,11 @@ Target "Release" (fun _ ->
         Branches.push ""
 
         let tag = eldersNuget.PackageName + "@" + repository.GitVersion.NuGetVersionV2;
-        printfn "Assign version %s as git tag" tag
+        printfn "[nyx] Assign version %s as git tag" tag
         Branches.tag "" tag
         Branches.pushTag "" "origin" tag
     else
-        printfn "NOT RELEASED!"
+        printfn "[nyx] NOT RELEASED!"
 )
 
 "Build"

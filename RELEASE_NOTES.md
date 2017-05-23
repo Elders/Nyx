@@ -1,3 +1,6 @@
+#### 0.12.15 - 23.05.2017
+* Adds support for building integration tests packages using `apptype=int-tests`
+
 #### 0.12.14 - 18.05.2017
 * Fix gitversion.yml
 
