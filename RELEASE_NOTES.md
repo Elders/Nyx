@@ -1,3 +1,6 @@
+#### 0.12.16 - 31.05.2017
+* Fixes a bug where nyx was unable to release
+
 #### 0.12.15 - 23.05.2017
 * Adds support for building integration tests packages using `apptype=int-tests`
 

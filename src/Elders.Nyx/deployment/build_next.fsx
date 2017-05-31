@@ -156,11 +156,15 @@ type EldersNuget(repository:Repository) =
         if result.ExitCode <> 0 then failwithf "%s returned with a non-zero exit code" args
         printfn "[nyx] Found %i packages." result.Messages.Count
         Console.WriteLine "------------------------"
+
         result.Messages
         |> Seq.map(fun split -> Regex.Split(split, " "))
         |> Seq.map(fun q ->
             printfn "[nyx] %s %s" q.[0] q.[1]
-            (q.[0].Equals(nugetPackageName, StringComparison.OrdinalIgnoreCase) && SemVerHelper.parse(q.[1]) < SemVerHelper.parse(version)) || (q.[0].Equals("No", StringComparison.OrdinalIgnoreCase) && q.[1].Equals("packages", StringComparison.OrdinalIgnoreCase)))
+            if (q.[0].Equals(nugetPackageName, StringComparison.OrdinalIgnoreCase))
+                then (q.[0].Equals(nugetPackageName, StringComparison.OrdinalIgnoreCase) && SemVerHelper.parse(q.[1]) < SemVerHelper.parse(version)) || (q.[0].Equals("No", StringComparison.OrdinalIgnoreCase) && q.[1].Equals("packages", StringComparison.OrdinalIgnoreCase))
+                else true
+            )
         |> Seq.tryFind(fun e -> e.Equals(true))
 
     let getNugetPackageDependencies =
