@@ -75,7 +75,8 @@ Configuration EldersWebApp
             }
             TestScript =
             {
-                $false
+                $dest = [io.path]::combine([environment]::getfolderpath('CommonApplicationData'), $using:node.Company, $using:node.App, $using:node.Tenant, $using:node.Host)
+                -Not(Test-Path -Path $dest)
             }
         }
 
