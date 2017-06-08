@@ -1,5 +1,6 @@
 param(
-    [string]$Company = 'MarketVision',
+    [Parameter(mandatory=$true)]
+    [string]$Company,
 
     [Parameter(mandatory=$true)]
     [string]$App,
