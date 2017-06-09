@@ -30,7 +30,7 @@ $cd = @{
            WebsiteSource = $WebsiteSource
            Website = $Website
            AppPool = $AppPool.Replace("/", "_")
-           WebsitePath  = [io.path]::combine([environment]::getfolderpath('CommonApplicationData'), $Company, $App, $Tenant, $AppHost.Replace("/", "\"))
+           WebsitePath  = [io.path]::combine([environment]::getfolderpath('CommonApplicationData'), $Company, $App, $Tenant, $AppHost.Replace("/", "_"))
        })
 }
 Configuration EldersWebApp
