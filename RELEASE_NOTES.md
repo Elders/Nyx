@@ -1,3 +1,6 @@
+#### 0.12.17 - 27.07.2017
+* Build scripts with cake
+
 #### 0.12.16 - 31.05.2017
 * Fixes a bug where nyx was unable to release
 
