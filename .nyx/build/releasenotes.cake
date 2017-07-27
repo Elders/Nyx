@@ -7,7 +7,7 @@ public class BuildReleaseNotes
         var rn = new BuildReleaseNotes();
         try
         {
-            var releaseNotesFile = parameters.RepositoryPaths.CsProjPath.Combine(parameters.NugetPackageName + ".rn.md");
+            var releaseNotesFile = parameters.RepositoryPaths.Directories.CsProjPath.Combine(parameters.NugetPackageName + ".rn.md");
             context.Information("Loading ReleaseNotes from {0}", releaseNotesFile);
 
             var last = context.ParseReleaseNotes(releaseNotesFile.ToString());
