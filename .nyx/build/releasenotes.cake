@@ -7,8 +7,10 @@ public class BuildReleaseNotes
         var rn = new BuildReleaseNotes();
         try
         {
-            context.Information("Loading Release Notes...");
-            var last = context.ParseReleaseNotes("C:/_/elders/Multithreading.Scheduler/src/Elders.Multithreading.Scheduler/Elders.Multithreading.Scheduler.rn.md");
+            var releaseNotesFile = parameters.RepositoryPaths.CsProjPath.Combine(parameters.NugetPackageName + ".rn.md");
+            context.Information("Loading ReleaseNotes from {0}", releaseNotesFile);
+
+            var last = context.ParseReleaseNotes(releaseNotesFile.ToString());
 
             string pattern = @"(?<Version>\d+(\s*\.\s*\d+){0,3})(?<Release>-[a-z][0-9a-z-]*)";
             var regex = new System.Text.RegularExpressions.Regex(pattern);
@@ -19,8 +21,8 @@ public class BuildReleaseNotes
             }
             else
             {
-                context.Information("Error loading Release Notes version!");
-                context.Information("Last Release Notes {0}", last);
+                context.Information("Error loading ReleaseNotes version!");
+                context.Information("Last ReleaseNotes {0}", last);
                 context.Information("RawVersionLine: {0}", last.RawVersionLine);
             }
             return rn;
