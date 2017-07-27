@@ -95,7 +95,7 @@ Task("Release")
 
     string tag = parameters.NugetPackageName + "@" + parameters.Version.SemVersion;
     GitTag("../.", tag);
-    ExecuteCommand("git push origin release-1.2.0");
+    ExecuteCommand("git push");
 });
 
 Task("Default").IsDependentOn("Release");
