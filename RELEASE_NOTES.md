@@ -1,3 +1,6 @@
+#### 0.12.18 - 04.09.2017
+* Removes exclusion of xml files when building artefacts
+
 #### 0.12.17 - 27.07.2017
 * Build scripts with cake
 

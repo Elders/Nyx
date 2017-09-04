@@ -213,7 +213,7 @@ type EldersNuget(repository:Repository) =
         dependencyFiles |> Seq.iter(fun file -> printfn "[nyx] %s" file)
         let excludePaths (pathsToExclude : string seq) (path: string) = pathsToExclude |> Seq.exists (path.endswith StringComparison.OrdinalIgnoreCase)|> not
         let exclude = fun file -> (excludePaths dependencyFiles file) && (FileHelper.hasExt ".pdb" file |> not)
-        let onlyDll = fun file -> (FileHelper.hasExt ".pdb" file |> not) && (FileHelper.hasExt ".xml" file |> not)
+        let onlyDll = fun file -> (FileHelper.hasExt ".pdb" file |> not)
         let buildDirList = Directory.GetDirectories artifacts.BuildDir
         buildDirList
         |> Seq.iter(fun dir ->
