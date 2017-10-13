@@ -1,7 +1,7 @@
 #load "./build/parameters.cake";
 
-#addin "Cake.Git"
-#addin "Cake.SemVer"
+#addin "nuget:https://www.nuget.org/api/v2?package=Cake.Git&version=0.15.0"
+#addin "nuget:https://www.nuget.org/api/v2?package=Cake.SemVer&version=1.0.14"
 
 #tool "nuget:https://www.nuget.org/api/v2?package=GitVersion.CommandLine&version=4.0.0-beta0012"
 
