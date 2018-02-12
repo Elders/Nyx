@@ -12,7 +12,7 @@ public class BuildReleaseNotes
 
             var last = context.ParseReleaseNotes(releaseNotesFile.ToString());
 
-            string pattern = @"(?<Version>\d+(\s*\.\s*\d+){0,3})(?<Release>-[a-z][0-9a-z-]*)";
+            string pattern = @"(?<Version>\d+(\s*\.\s*\d+){0,3})|(?<Release>-[a-z][0-9a-z-]*)";
             var regex = new System.Text.RegularExpressions.Regex(pattern);
             var result = regex.Match(last.RawVersionLine);
             if(result.Success)
