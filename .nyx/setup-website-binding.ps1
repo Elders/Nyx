@@ -115,7 +115,7 @@ Function Add-Binding {
             Write-Host 'Existing binding removed!'
         } 
 
-        New-WebBinding -Name $WebsiteName -Port 443 -Protocol https -HostHeader $DomainName
+        New-WebBinding -Name $WebsiteName -Port 443 -Protocol https -HostHeader $DomainName -SSLFlags 1
         Write-Host 'New binding added!'
 
         (Get-WebBinding -Name $WebsiteName -Port 443 -Protocol "https" -HostHeader $DomainName).AddSslCertificate($CertThumbprint, "my")
