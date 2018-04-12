@@ -122,7 +122,6 @@ public class BuildParameters
             CanPublishNuGet = CheckCanPublishNuGet(context)
         };
 
-        context.Information("5");
         return res;
     }
 
