@@ -95,37 +95,9 @@ Task("Release")
 
     string tag = parameters.NugetPackageName + "@" + parameters.Version.SemVersion;
     GitTag("../.", tag);
-    ExecuteCommand("git push --tags");
+    Cmd.ExecuteCommand("git push --tags");
 });
 
 Task("Default").IsDependentOn("Release");
 
 RunTarget(target);
-
-void ExecuteCommand(string command)
- {
-     Information(command);
-     int exitCode;
-     System.Diagnostics.ProcessStartInfo processInfo;
-     System.Diagnostics.Process process;
-
-     processInfo = new System.Diagnostics.ProcessStartInfo("cmd.exe", "/c " + command);
-     processInfo.CreateNoWindow = true;
-     processInfo.UseShellExecute = false;
-     // *** Redirect the output ***
-     processInfo.RedirectStandardError = true;
-     processInfo.RedirectStandardOutput = true;
-
-     process = System.Diagnostics.Process.Start(processInfo);
-     process.OutputDataReceived += (object sender, System.Diagnostics.DataReceivedEventArgs e) =>
-            Information("[output]" + e.Data);
-     process.BeginOutputReadLine();
-
-     process.ErrorDataReceived += (object sender, System.Diagnostics.DataReceivedEventArgs e) =>
-            Information("[error]" + e.Data);
-     process.BeginErrorReadLine();
-     process.WaitForExit();
-
-     Information("ExitCode: " + process.ExitCode);
-     process.Close();
-  }
