@@ -15,7 +15,7 @@ insert_final_newline = true
 trim_trailing_whitespace = false
 insert_final_newline = false
 
-[*.cs]
+[*.{cs,cake}]
 indent_size = 4
 
 [*.{csproj,wixproj}]
