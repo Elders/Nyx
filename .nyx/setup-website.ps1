@@ -74,7 +74,7 @@ Configuration EldersWebApp
                 Stop-WebAppPool -Name $node.AppPool
                 Stop-Website -Name $node.Website
                 $dest = [io.path]::combine([environment]::getfolderpath('CommonApplicationData'), $using:node.Company, $using:node.App, $using:node.Tenant, $using:node.Host)
-                Remove-Item -Path $dest -Recurse -Force
+                Remove-Item -Path $dest -Recurse -Force -Verbose
                 Start-Website -Name $node.Website
             }
             TestScript =
