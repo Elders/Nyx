@@ -164,6 +164,7 @@ Configuration EldersWebApp
             managedRuntimeVersion   = 'v4.0'
             managedPipelineMode     = 'Integrated'
             identityType            = 'NetworkService'
+            DependsOn = '[Script]CleanWebsiteDirectory'
         }
 
         xWebSite app
