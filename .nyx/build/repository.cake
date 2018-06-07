@@ -25,20 +25,16 @@ public class RepositoryPaths
 
 public class RepositoryDirectories
 {
-    public DirectoryPath CsProjPath { get; private set; }
-    public DirectoryPath CsProjFile { get; private set; }
-    public string LastGitTag { get; private set; }
-    public Semver.SemVersion LastReleasedVersion { get; private set; }
-
-    public RepositoryDirectories(
-        DirectoryPath csProjPath,
-        DirectoryPath csProjFile,
-        string lastGitTag,
-        Semver.SemVersion lastReleasedVersion)
+    public RepositoryDirectories(DirectoryPath csProjPath, DirectoryPath csProjFile, string lastGitTag, Semver.SemVersion lastReleasedVersion)
     {
         CsProjPath = csProjPath;
         CsProjFile = csProjFile;
         LastGitTag = lastGitTag;
         LastReleasedVersion = lastReleasedVersion;
     }
+
+    public DirectoryPath CsProjPath { get; private set; }
+    public DirectoryPath CsProjFile { get; private set; }
+    public string LastGitTag { get; private set; }
+    public Semver.SemVersion LastReleasedVersion { get; private set; }
 }

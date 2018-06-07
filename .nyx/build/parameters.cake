@@ -35,6 +35,7 @@ public class BuildParameters
     public BuildPaths Paths { get; private set; }
     public BuildPackages Packages { get; private set; }
     public bool CanPublishNuGet { get; private set; }
+    public bool IsNetFull { get; private set; }
 
     public bool ShouldPublish
     {
@@ -104,6 +105,7 @@ public class BuildParameters
         var nugetPackageName = context.Argument("nugetPackageName", project);
         var target = context.Argument("target", "Default");
         var buildSystem = context.BuildSystem();
+        var isNetFull = context.Argument("netfull", "");
 
         var res = new BuildParameters {
             Project = project,
@@ -119,7 +121,8 @@ public class BuildParameters
             IsMainCakeBranch = StringComparer.OrdinalIgnoreCase.Equals("main", buildSystem.AppVeyor.Environment.Repository.Branch),
             IsDevelopCakeBranch = StringComparer.OrdinalIgnoreCase.Equals("develop", buildSystem.AppVeyor.Environment.Repository.Branch),
             IsTagged = IsBuildTagged(buildSystem),
-            CanPublishNuGet = CheckCanPublishNuGet(context)
+            CanPublishNuGet = CheckCanPublishNuGet(context),
+            IsNetFull = string.IsNullOrEmpty(isNetFull) == false
         };
 
         return res;
