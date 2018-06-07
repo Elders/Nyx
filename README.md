@@ -30,3 +30,8 @@ To test your assembly with sourcelink use `dotnet-sourcelink` tool
 ```
 <DotNetCliToolReference Include="dotnet-sourcelink" Version="2.8.0" />
 ```
+
+
+# How to use in VS
+
+Go to https://github.com/ctaggart/SourceLink and follow the first part. It should take 2-3 min max to enable SourceLink for VS2017 and debug flawlessly
