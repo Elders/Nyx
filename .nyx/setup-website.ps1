@@ -71,8 +71,12 @@ Configuration EldersWebApp
             }
             SetScript =
             {
-                Stop-WebAppPool -Name $node.AppPool
+                $appState = Get-WebAppPoolState -Name $node.AppPool
+                if ($appState.Value -eq "started") {
+                    Stop-WebAppPool -Name $node.AppPool
+                }
                 Stop-Website -Name $node.Website
+                Sleep 10
                 $dest = [io.path]::combine([environment]::getfolderpath('CommonApplicationData'), $using:node.Company, $using:node.App, $using:node.Tenant, $using:node.Host)
                 Remove-Item -Path $dest -Recurse -Force -Verbose
                 Start-Website -Name $node.Website

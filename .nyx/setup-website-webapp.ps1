@@ -53,8 +53,17 @@ Configuration EldersWebApp
             }
             SetScript =
             {
+                $appState = Get-WebAppPoolState -Name $node.AppPool
+                if ($appState.Value -eq "started") {
+                    Stop-WebAppPool -Name $node.AppPool
+                }
+                Stop-Website -Name $node.Website
+                Sleep 10
+
                 $dest = $using:node.WebsitePath
                 Remove-Item -Path $dest -Recurse -Force
+
+                Start-Website -Name $node.Website
             }
             TestScript =
             {
