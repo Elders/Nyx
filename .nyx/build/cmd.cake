@@ -4,7 +4,7 @@ public static class Cmd
     {
         string output = "";
         context.Information(command);
-        int exitCode;
+
         System.Diagnostics.ProcessStartInfo processInfo;
         System.Diagnostics.Process process;
 
