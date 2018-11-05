@@ -13,8 +13,8 @@ public class BuildPaths
         var buildDir = (DirectoryPath)(projectDir + context.Directory("-") + context.Directory(configuration));
         var artifactsDir = (DirectoryPath)(buildDir.Combine("artifacts-") + context.Directory(semVersion));
         var artifactsBinDir = artifactsDir.Combine("bin");
-        var artifactsBinNet45 = artifactsBinDir.Combine("net45");
-        var artifactsBinNetCoreApp10 = artifactsBinDir.Combine("netcoreapp1.0");
+        var artifactsBinNetCoreApp = artifactsBinDir.Combine("netcoreapp");
+        var artifactsBinNetCoreAppPublish = artifactsBinNetCoreApp.Combine("publish");
         var testResultsDir = artifactsDir.Combine("test-results");
         var nugetRoot = artifactsDir.Combine("nuget");
 
@@ -24,8 +24,8 @@ public class BuildPaths
             testResultsDir,
             nugetRoot,
             artifactsBinDir,
-            artifactsBinNet45,
-            artifactsBinNetCoreApp10);
+            artifactsBinNetCoreApp,
+            artifactsBinNetCoreAppPublish);
 
         return new BuildPaths
         {
@@ -40,8 +40,8 @@ public class BuildDirectories
     public DirectoryPath TestResults { get; private set; }
     public DirectoryPath NugetRoot { get; private set; }
     public DirectoryPath ArtifactsBin { get; private set; }
-    public DirectoryPath ArtifactsBinNet45 { get; private set; }
-    public DirectoryPath ArtifactsBinNetCoreApp10 { get; private set; }
+    public DirectoryPath ArtifactsBinNetCoreApp { get; private set; }
+    public DirectoryPath ArtifactsBinNetCoreAppPublish { get; private set; }
     public ICollection<DirectoryPath> ToClean { get; private set; }
 
     public BuildDirectories(
@@ -49,23 +49,22 @@ public class BuildDirectories
         DirectoryPath testResultsDir,
         DirectoryPath nugetRoot,
         DirectoryPath artifactsBinDir,
-        DirectoryPath artifactsBinNet45,
-        DirectoryPath artifactsBinNetCoreApp10
+        DirectoryPath artifactsBinNetCoreApp,
+        DirectoryPath artifactsBinNetCoreAppPublish
         )
     {
         Artifacts = artifactsDir;
         TestResults = testResultsDir;
         NugetRoot = nugetRoot;
         ArtifactsBin = artifactsBinDir;
-        ArtifactsBinNet45 = artifactsBinNet45;
-        ArtifactsBinNetCoreApp10 = artifactsBinNetCoreApp10;
+        ArtifactsBinNetCoreApp = artifactsBinNetCoreApp;
+        ArtifactsBinNetCoreAppPublish = artifactsBinNetCoreAppPublish;
         ToClean = new[] {
             Artifacts,
             TestResults,
             NugetRoot,
             ArtifactsBin,
-            ArtifactsBinNet45,
-            ArtifactsBinNetCoreApp10
+            ArtifactsBinNetCoreApp
         };
     }
 }

@@ -15,7 +15,7 @@ public class BuildVersion
         Semver.SemVersion semVersion = null;
         string milestone = null;
 
-        if(System.IO.File.Exists(repositoryPaths.Directories.CsProjPath.Combine("gitversion.ymll").ToString()) == false)
+        if(System.IO.File.Exists(repositoryPaths.Directories.CsProjPath.Combine("gitversion.yml").ToString()) == false)
         {
             context.Information("Creating gitversion.yml...");
         }
@@ -28,8 +28,8 @@ public class BuildVersion
             WorkingDirectory = repositoryPaths.Directories.CsProjPath
         });
 
-        version = assertedVersions.MajorMinorPatch;
-        semVersion = context.ParseSemVer(assertedVersions.LegacySemVerPadded, true);
+        version = $"{assertedVersions.Major}.0.0.0";
+        semVersion = context.ParseSemVer(assertedVersions.NuGetVersion, true);
         milestone = string.Concat("v", version);
 
         context.Information("Calculated Semantic Version: {0}", semVersion);
