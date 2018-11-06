@@ -36,7 +36,10 @@ public class BuildParameters
     public BuildPackages Packages { get; private set; }
     public bool CanPublishNuGet { get; private set; }
     public bool IsNetFull { get; private set; }
-    public bool IsWeb { get; private set; }
+    public string Type { get; private set; }
+    public bool IsApp { get { return Type == "app"; } }
+    public bool IsMsi { get { return Type == "msi"; } }
+    public bool IsLib { get { return string.IsNullOrEmpty(Type) || Type == "lib"; } }
 
     public bool ShouldPublish
     {
@@ -107,7 +110,7 @@ public class BuildParameters
         var target = context.Argument("target", "Default");
         var buildSystem = context.BuildSystem();
         var isNetFull = context.Argument("netfull", "");
-        var isWeb = context.Argument("web", "");
+        var type = context.Argument("type", "lib");
 
         var res = new BuildParameters {
             Project = project,
@@ -125,7 +128,7 @@ public class BuildParameters
             IsTagged = IsBuildTagged(buildSystem),
             CanPublishNuGet = CheckCanPublishNuGet(context),
             IsNetFull = string.IsNullOrEmpty(isNetFull) == false,
-            IsWeb = string.IsNullOrEmpty(isWeb) == false
+            Type = type
         };
 
         return res;

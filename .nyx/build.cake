@@ -1,11 +1,13 @@
 #load "./build/parameters.cake";
 #load "./build/cmd.cake";
+#load "./build/cmd.cake";
 
 #addin "nuget:https://www.nuget.org/api/v2?package=Cake.Git&version=0.19.0"
 #addin "nuget:https://www.nuget.org/api/v2?package=Cake.SemVer&version=3.0.0"
 #addin "nuget:https://www.nuget.org/api/v2?package=semver&version=2.0.4"
 
 #tool "nuget:https://www.nuget.org/api/v2?package=GitVersion.CommandLine&version=4.0.0"
+#tool "nuget:?package=WiX"
 
 BuildParameters parameters = BuildParameters.GetParameters(Context);
 
@@ -14,13 +16,13 @@ Setup(context =>
     parameters.Initialize(context);
 
     Information("================================================================================================");
-    Information("Building version {1} of {0} ({2}, {3}) using version {4} of Cake. (IsWeb: {5})",
+    Information("Building version {1} of {0} ({2}, {3}) using version {4} of Cake. (IsApp: {5})",
         parameters.Project,
         parameters.Version.SemVersion,
         parameters.Configuration,
         parameters.Target,
         parameters.Version.CakeVersion,
-        parameters.IsWeb,
+        parameters.IsApp,
         parameters.IsTagged);
 
     Information("------------------------------------------------------------------------------------------------");
@@ -63,9 +65,63 @@ Task("Build")
         });
     });
 
-Task("Publish")
+Task("Publish-As-Msi")
     .IsDependentOn("Build")
-    .WithCriteria(() => parameters.IsWeb)
+    .WithCriteria(() => parameters.IsMsi)
+    .Does(() =>
+    {
+        var path = MakeAbsolute(parameters.RepositoryPaths.Directories.CsProjFile);
+        DotNetCorePublish(path.FullPath, new DotNetCorePublishSettings()
+        {
+            Configuration = parameters.Configuration,
+            OutputDirectory = parameters.Paths.Directories.ArtifactsBinNetCoreAppPublishTemp,
+            ArgumentCustomization = args => args
+                .Append("/p:Version={0}", parameters.Version.SemVersion)
+                .Append("/p:AssemblyVersion={0}", parameters.Version.Version)
+                .Append("/p:FileVersion={0}", parameters.Version.Version)
+                .Append("/p:SourceLinkCreate=true")
+        });
+
+
+        Information("================================================================================================");
+        Information("Published bits path: {0}", parameters.Paths.Directories.ArtifactsBinNetCoreAppPublishTemp.FullPath);
+        var filePath = File("App.wxs");
+        WiXHeat(parameters.Paths.Directories.ArtifactsBinNetCoreAppPublishTemp.FullPath, filePath, WiXHarvestType.Dir, new HeatSettings {
+            ArgumentCustomization = args => args.Append("-var var.Source"),
+            ComponentGroupName = "References",
+            Verbose = true,
+            NoLogo = true,
+            SuppressRootDirectory = true,
+            GenerateGuid = true,
+            GenerateGuidWithoutBraces = true,
+            SuppressCom = true,
+            SuppressRegistry = true,
+            Transform = parameters.RepositoryPaths.Directories.WixHeatTransformXslt.FullPath
+        });
+
+        WiXCandle("App.wxs", new CandleSettings {
+            ArgumentCustomization = args => args
+                .Append("-dSource=" + parameters.Paths.Directories.ArtifactsBinNetCoreAppPublishTemp.FullPath)
+                .Append("-ext WixUtilExtension"),
+            Architecture = Architecture.X64,
+            Verbose = true
+        });
+
+        WiXLight("App.wixobj", new LightSettings {
+            ArgumentCustomization = args => args
+                .Append("-dSource=" + parameters.Paths.Directories.ArtifactsBinNetCoreAppPublishTemp.FullPath)
+                .Append("-ext WixUIExtension")
+                .Append("-ext WixUtilExtension"),
+            RawArguments = "-pedantic -v",
+            OutputFile = parameters.Paths.Directories.ArtifactsBinNetCoreAppPublish + "/" + parameters.Project + ".msi"
+        });
+
+        DeleteDirectory(parameters.Paths.Directories.ArtifactsBinNetCoreAppPublishTemp.FullPath, recursive:true);
+    });
+
+Task("Publish-As-App")
+    .IsDependentOn("Build")
+    .WithCriteria(() => parameters.IsApp)
     .Does(() =>
     {
         var path = MakeAbsolute(parameters.RepositoryPaths.Directories.CsProjFile);
@@ -81,7 +137,16 @@ Task("Publish")
         });
     });
 
+Task("Publish")
+    .IsDependentOn("Publish-As-App")
+    .IsDependentOn("Publish-As-Msi")
+    .Does(() =>
+    {
+        Information("Publishing...");
+    });
+
 Task("Create-Lib-NuGet-Packages")
+    .WithCriteria(() => parameters.IsLib)
     .IsDependentOn("Build")
     .Does(() =>
     {
@@ -97,9 +162,9 @@ Task("Create-Lib-NuGet-Packages")
         });
     });
 
-Task("Create-Web-NuGet-Packages")
+Task("Create-App-NuGet-Packages")
     .IsDependentOn("Publish")
-    .WithCriteria(() => parameters.IsWeb)
+    .WithCriteria(() => parameters.IsApp || parameters.IsMsi)
     .Does(() =>
     {
         var deployment = MakeAbsolute(parameters.RepositoryPaths.Directories.DeploymentPath).FullPath;
@@ -123,7 +188,7 @@ Task("Create-Web-NuGet-Packages")
 
 Task("Pack")
     .IsDependentOn("Create-Lib-NuGet-Packages")
-    .IsDependentOn("Create-Web-NuGet-Packages")
+    .IsDependentOn("Create-App-NuGet-Packages")
     .Does(() =>
     {
         Information("Packing...");

@@ -15,6 +15,7 @@ public class BuildPaths
         var artifactsBinDir = artifactsDir.Combine("bin");
         var artifactsBinNetCoreApp = artifactsBinDir.Combine("netcoreapp");
         var artifactsBinNetCoreAppPublish = artifactsBinNetCoreApp.Combine("publish");
+        var artifactsBinNetCoreAppPublishTemp = artifactsBinNetCoreAppPublish.Combine("temp");
         var testResultsDir = artifactsDir.Combine("test-results");
         var nugetRoot = artifactsDir.Combine("nuget");
 
@@ -25,7 +26,8 @@ public class BuildPaths
             nugetRoot,
             artifactsBinDir,
             artifactsBinNetCoreApp,
-            artifactsBinNetCoreAppPublish);
+            artifactsBinNetCoreAppPublish,
+            artifactsBinNetCoreAppPublishTemp);
 
         return new BuildPaths
         {
@@ -42,6 +44,7 @@ public class BuildDirectories
     public DirectoryPath ArtifactsBin { get; private set; }
     public DirectoryPath ArtifactsBinNetCoreApp { get; private set; }
     public DirectoryPath ArtifactsBinNetCoreAppPublish { get; private set; }
+    public DirectoryPath ArtifactsBinNetCoreAppPublishTemp { get; private set; }
     public ICollection<DirectoryPath> ToClean { get; private set; }
 
     public BuildDirectories(
@@ -50,7 +53,8 @@ public class BuildDirectories
         DirectoryPath nugetRoot,
         DirectoryPath artifactsBinDir,
         DirectoryPath artifactsBinNetCoreApp,
-        DirectoryPath artifactsBinNetCoreAppPublish
+        DirectoryPath artifactsBinNetCoreAppPublish,
+        DirectoryPath artifactsBinNetCoreAppPublishTemp
         )
     {
         Artifacts = artifactsDir;
@@ -59,6 +63,7 @@ public class BuildDirectories
         ArtifactsBin = artifactsBinDir;
         ArtifactsBinNetCoreApp = artifactsBinNetCoreApp;
         ArtifactsBinNetCoreAppPublish = artifactsBinNetCoreAppPublish;
+        ArtifactsBinNetCoreAppPublishTemp = artifactsBinNetCoreAppPublishTemp;
         ToClean = new[] {
             Artifacts,
             TestResults,

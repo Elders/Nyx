@@ -10,6 +10,8 @@ public class RepositoryPaths
         var csProjPath = srcDir.Combine(parameters.Project);
         var deploymentPath = csProjPath.Combine("deployment");
         var csProjFile = csProjPath.Combine(parameters.Project + ".csproj");
+        var wixHeatTransformXslt = csProjPath.Combine("wix-heat-transform.xslt");
+
 
         string globPattern = parameters.NugetPackageName + "@" + "*[0-9].*[0-9].*[0-9]*";
         var lastGitTag = Cmd.ExecuteCommand(context, "git describe --tags --match " + globPattern);
@@ -19,20 +21,21 @@ public class RepositoryPaths
 
         return new RepositoryPaths
         {
-            Directories = new RepositoryDirectories(csProjPath, csProjFile, deploymentPath, lastGitTag, lastReleasedVersion)
+            Directories = new RepositoryDirectories(csProjPath, csProjFile, deploymentPath, lastGitTag, lastReleasedVersion, wixHeatTransformXslt)
         };
     }
 }
 
 public class RepositoryDirectories
 {
-    public RepositoryDirectories(DirectoryPath csProjPath, DirectoryPath csProjFile, DirectoryPath deploymentPath, string lastGitTag, Semver.SemVersion lastReleasedVersion)
+    public RepositoryDirectories(DirectoryPath csProjPath, DirectoryPath csProjFile, DirectoryPath deploymentPath, string lastGitTag, Semver.SemVersion lastReleasedVersion, DirectoryPath wixHeatTransformXslt)
     {
         CsProjPath = csProjPath;
         CsProjFile = csProjFile;
         DeploymentPath = deploymentPath;
         LastGitTag = lastGitTag;
         LastReleasedVersion = lastReleasedVersion;
+        WixHeatTransformXslt = wixHeatTransformXslt;
     }
 
     public DirectoryPath CsProjPath { get; private set; }
@@ -40,4 +43,5 @@ public class RepositoryDirectories
     public DirectoryPath DeploymentPath { get; private set; }
     public string LastGitTag { get; private set; }
     public Semver.SemVersion LastReleasedVersion { get; private set; }
+    public DirectoryPath WixHeatTransformXslt { get; private set; }
 }
