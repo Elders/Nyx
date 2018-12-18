@@ -166,7 +166,7 @@ public class BuildParameters
         {
             canPublish = true;
         }
-        else if(tring.IsNullOrEmpty(apiKey) == false)
+        else if(string.IsNullOrEmpty(apiKey) == false)
         {
             canPublish = true;
         }
