@@ -14,7 +14,7 @@ public class RepositoryPaths
 
 
         string globPattern = parameters.NugetPackageName + "@" + "*[0-9].*[0-9].*[0-9]*";
-        var lastGitTag = Cmd.ExecuteCommand(context, "git describe --tags --match " + globPattern);
+        var lastGitTag = OS.ExecuteCommand(context, "git describe --tags --match " + globPattern);
 
         var lastGitTagVersion = lastGitTag.Replace(parameters.NugetPackageName + "@", string.Empty);
         var lastReleasedVersion = context.ParseSemVer(lastGitTagVersion, true);

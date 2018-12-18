@@ -22,6 +22,16 @@ public class BuildVersion
 
         context.Information("Calculating Semantic Version...");
 
+        if(context.IsRunningOnUnix())
+        {
+            string[] lines = {
+            "<configuration>",
+            "   <dllmap os=\"linux\" cpu=\"x86-64\" wordsize=\"64\" dll=\"git2-381caf5\" target=\"/usr/local/lib/libgit2.so\" />",
+            "   <dllmap os=\"osx\" cpu=\"x86,x86-64\" dll=\"git2-381caf5\" target=\"lib/osx/libgit2-381caf5.dylib\" />",
+            "</configuration>"};
+            System.IO.File.WriteAllLines(@"/Elders/tools/GitVersion.CommandLine.3.6.1/tools/LibGit2Sharp.dll.config", lines);
+        }
+
         GitVersion assertedVersions = context.GitVersion(new GitVersionSettings
         {
             OutputType = GitVersionOutput.Json,

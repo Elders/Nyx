@@ -1,6 +1,5 @@
 #load "./build/parameters.cake";
-#load "./build/cmd.cake";
-#load "./build/cmd.cake";
+#load "./build/os.cake";
 
 #addin "nuget:https://www.nuget.org/api/v2?package=Cake.Git&version=0.19.0"
 #addin "nuget:https://www.nuget.org/api/v2?package=Cake.SemVer&version=3.0.0"
@@ -215,7 +214,7 @@ Task("Release")
 
         string tag = parameters.NugetPackageName + "@" + parameters.Version.SemVersion;
         GitTag("../.", tag);
-        Cmd.ExecuteCommand(context, "git push --tags");
+        OS.ExecuteCommand(context, "git push --tags");
     });
 
 Task("Default").IsDependentOn("Release");
