@@ -219,7 +219,7 @@ Task("Release")
         {
             if(NuGetHasSource(apiUrl))
             {
-                NuGetRemoveSource(sourceName);
+                NuGetRemoveSource(sourceName, apiUrl);
             }
 
             NuGetAddSource(sourceName, apiUrl, new NuGetSourcesSettings
