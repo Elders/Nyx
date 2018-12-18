@@ -154,7 +154,23 @@ public class BuildParameters
 
     private static bool CheckCanPublishNuGet(ICakeContext context)
     {
+        var apiUrl = context.EnvironmentVariable("nugetserver");
         var apiKey = context.EnvironmentVariable("RELEASE_NUGETKEY");
-        return string.IsNullOrEmpty(apiKey) == false;
+        var password = context.EnvironmentVariable("RELEASE_NUGET_PASSWORD");
+        var userName = context.EnvironmentVariable("RELEASE_NUGET_USERNAME");
+        var sourceName = context.EnvironmentVariable("RELEASE_NUGET_SOURCENAME");
+
+        var canPublish = false;
+
+        if (string.IsNullOrEmpty(userName) == false && string.IsNullOrEmpty(password) == false && string.IsNullOrEmpty(sourceName) == false && string.IsNullOrEmpty(apiUrl) == false)
+        {
+            canPublish = true;
+        }
+        else if(tring.IsNullOrEmpty(apiKey) == false)
+        {
+            canPublish = true;
+        }
+
+        return canPublish;
     }
 }

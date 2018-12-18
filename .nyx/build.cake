@@ -193,24 +193,56 @@ Task("Pack")
         Information("Packing...");
     });
 
+
+
 Task("Release")
     .IsDependentOn("Pack")
     .WithCriteria(context => parameters.CanRelease)
     .WithCriteria(context => parameters.CanPublishNuGet)
     .Does(context =>
     {
-        var apiKey = EnvironmentVariable("RELEASE_NUGETKEY");
-        if(string.IsNullOrEmpty(apiKey)) throw new InvalidOperationException("Could not resolve NuGet API key from EnvVar=RELEASE_NUGETKEY.");
-
         var apiUrl = EnvironmentVariable("nugetserver");
         if(string.IsNullOrEmpty(apiUrl))
             apiUrl = "https://www.nuget.org/api/v2/package";
 
+        var password = EnvironmentVariable("RELEASE_NUGET_PASSWORD");
+
+        var userName = EnvironmentVariable("RELEASE_NUGET_USERNAME");
+
+        var sourceName = EnvironmentVariable("RELEASE_NUGET_SOURCENAME");
+
+        var apiKey = EnvironmentVariable("RELEASE_NUGETKEY");
+
         var pkg = parameters.Packages.All.First();
-        NuGetPush(pkg.PackagePath, new NuGetPushSettings {
-            ApiKey = apiKey,
-            Source = apiUrl
-        });
+    
+        if (string.IsNullOrEmpty(userName) == false && string.IsNullOrEmpty(password) == false && string.IsNullOrEmpty(sourceName) == false && string.IsNullOrEmpty(apiUrl) == false)
+        {
+            if(NuGetHasSource(apiUrl))
+            {
+                NuGetRemoveSource(sourceName);
+            }
+
+            NuGetAddSource(sourceName, apiUrl, new NuGetSourcesSettings
+                {
+                    UserName = userName,
+                    Password = password,
+                });
+
+            NuGetPush(pkg.PackagePath, new NuGetPushSettings {
+                Source = sourceName
+            });
+        }
+        else if(string.IsNullOrEmpty(apiKey))
+        {
+            NuGetPush(pkg.PackagePath, new NuGetPushSettings {
+                ApiKey = apiKey,
+                Source = apiUrl
+            });
+        }
+        else
+        {
+            throw new InvalidOperationException("Could not find credentials to push to NuGet feed.");
+        }
 
         string tag = parameters.NugetPackageName + "@" + parameters.Version.SemVersion;
         GitTag("../.", tag);
