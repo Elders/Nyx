@@ -246,7 +246,8 @@ Task("Release")
         }
 
         string tag = parameters.NugetPackageName + "@" + parameters.Version.SemVersion;
-        GitTag("../.", tag);
+        //GitTag("../.", tag);
+        OS.ExecuteCommand(context, "git tag " + tag);
         OS.ExecuteCommand(context, "git push --tags");
     });
 
