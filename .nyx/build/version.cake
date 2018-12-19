@@ -30,7 +30,6 @@ public class BuildVersion
             "   <dllmap os=\"osx\" cpu=\"x86,x86-64\" dll=\"git2-381caf5\" target=\"lib/osx/libgit2-381caf5.dylib\" />",
             "</configuration>"};
             System.IO.File.WriteAllLines(@"/Elders/tools/GitVersion.CommandLine.3.6.1/tools/LibGit2Sharp.dll.config", lines);
-            System.IO.File.WriteAllLines(@"/Elders/tools/Addins/Cake.Git.0.19.0/lib/net461/LibGit2Sharp.dll.config", lines);
         }
 
         GitVersion assertedVersions = context.GitVersion(new GitVersionSettings
