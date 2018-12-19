@@ -223,16 +223,17 @@ Task("Release")
             }
 
             NuGetAddSource(sourceName, apiUrl, new NuGetSourcesSettings
-                {
+                {  
                     UserName = userName,
                     Password = password,
                 });
 
             NuGetPush(pkg.PackagePath, new NuGetPushSettings {
+                ApiKey = apiKey,
                 Source = sourceName
             });
         }
-        else if(string.IsNullOrEmpty(apiKey))
+        else if(string.IsNullOrEmpty(apiKey) == false)
         {
             NuGetPush(pkg.PackagePath, new NuGetPushSettings {
                 ApiKey = apiKey,
