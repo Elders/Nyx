@@ -138,6 +138,7 @@ Task("Publish-As-App")
 
 Task("Build-Image")
     .IsDependentOn("Publish-As-App")
+    .WithCriteria(context => parameters.CanRelease)
     .WithCriteria(context => parameters.CanPublishDocker)
     .Does(context => 
     {
