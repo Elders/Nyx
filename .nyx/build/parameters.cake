@@ -159,9 +159,9 @@ public class BuildParameters
     {
         var canBuild = false;
         var dockerRepo = context.EnvironmentVariable("DOCKER_REPO");
-        string currentBranch = OS.ExecuteCommand(context, "git branch | grep \\* | cut -d ' ' -f2");
+        //string currentBranch = OS.ExecuteCommand(context, "git branch | grep \\* | cut -d ' ' -f2");
         
-        if ( (string.IsNullOrEmpty(dockerRepo) == false) && (currentBranch == "master") )
+        if ( (string.IsNullOrEmpty(dockerRepo) == false) /*&& (currentBranch == "master")*/ )
         {
             canBuild = true;
         }
