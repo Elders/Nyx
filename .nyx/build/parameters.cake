@@ -3,6 +3,7 @@
 #load "./packages.cake"
 #load "./version.cake"
 #load "./releasenotes.cake"
+#load "./os.cake";
 
 public class BuildParameters
 {
@@ -35,6 +36,7 @@ public class BuildParameters
     public BuildPaths Paths { get; private set; }
     public BuildPackages Packages { get; private set; }
     public bool CanPublishNuGet { get; private set; }
+    public bool CanPublishDocker { get; private set; }
     public bool IsNetFull { get; private set; }
     public string Type { get; private set; }
     public bool IsApp { get { return Type == "app"; } }
@@ -127,6 +129,7 @@ public class BuildParameters
             IsDevelopCakeBranch = StringComparer.OrdinalIgnoreCase.Equals("develop", buildSystem.AppVeyor.Environment.Repository.Branch),
             IsTagged = IsBuildTagged(buildSystem),
             CanPublishNuGet = CheckCanPublishNuGet(context),
+            CanPublishDocker = CheckCanBuildImage(context),
             IsNetFull = string.IsNullOrEmpty(isNetFull) == false,
             Type = type
         };
@@ -150,6 +153,20 @@ public class BuildParameters
     {
         var targets = new [] { "ReleaseNotes", "Create-Release-Notes" };
         return targets.Any(t => StringComparer.OrdinalIgnoreCase.Equals(t, target));
+    }
+
+    private static bool CheckCanBuildImage(ICakeContext context)
+    {
+        var canBuild = false;
+        var dockerRepo = context.EnvironmentVariable("DOCKER_REPO");
+        string currentBranch = OS.ExecuteCommand(context, "git branch | grep \\* | cut -d ' ' -f2");
+        
+        if ( (string.IsNullOrEmpty(dockerRepo) == false) && (currentBranch == "master") )
+        {
+            canBuild = true;
+        }
+
+        return canBuild;
     }
 
     private static bool CheckCanPublishNuGet(ICakeContext context)

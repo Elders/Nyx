@@ -136,9 +136,29 @@ Task("Publish-As-App")
         });
     });
 
+Task("Build-Image")
+    .IsDependentOn("Publish-As-App")
+    .WithCriteria(context => parameters.CanPublishDocker)
+    .Does(context => 
+    {
+        var dockerRepo = EnvironmentVariable("DOCKER_REPO");
+        string tag = parameters.NugetPackageName + "@" + parameters.Version.SemVersion;
+        string repoTag = dockerRepo + ":" + parameters.Version.SemVersion;
+        string dockercmd = "docker build ../docker/" + dockerRepo + " --tag " + repoTag;
+        
+        OS.ExecuteCommand(context, "cp -R " + parameters.Paths.Directories.ArtifactsBinNetCoreAppPublish + "/* ../docker/" + dockerRepo + "/contents/");
+        OS.ExecuteCommand(context, dockercmd);
+        OS.ExecuteCommand(context, "docker push " + repoTag);
+        OS.ExecuteCommand(context, "git tag " + tag);
+        OS.ExecuteCommand(context, "git push --tags");
+        
+    });
+    
+
 Task("Publish")
     .IsDependentOn("Publish-As-App")
     .IsDependentOn("Publish-As-Msi")
+    .IsDependentOn("Build-Image")
     .Does(() =>
     {
         Information("Publishing...");
