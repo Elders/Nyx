@@ -149,6 +149,7 @@ Task("Build-Image")
         
         OS.ExecuteCommand(context, "cp -R " + parameters.Paths.Directories.ArtifactsBinNetCoreAppPublish + "/* ../docker/" + dockerRepo + "/contents/");
         OS.ExecuteCommand(context, dockercmd);
+        OS.ExecuteCommand(context, "export TAG=" + repoTag);
         OS.ExecuteCommand(context, "docker push " + repoTag);
         OS.ExecuteCommand(context, "git tag " + tag);
         OS.ExecuteCommand(context, "git push --tags");
