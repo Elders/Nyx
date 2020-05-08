@@ -149,7 +149,7 @@ type EldersNuget(repository:Repository) =
     let canPublishPackage gitVersion =
         let version = gitVersion.NuGetVersionV2
         let prerelease = if version.Contains("beta") then " -prerelease" else ""
-        let args = "/c " + nuget + " list " + nugetPackageName + prerelease;
+        let args = "/c " + nuget + " list packageid:" + nugetPackageName + prerelease;
         let result = ExecProcessAndReturnMessages (fun info ->
                                 info.FileName <- "cmd"
                                 info.Arguments <- args) (TimeSpan.FromMinutes 20.0)

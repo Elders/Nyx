@@ -1,3 +1,6 @@
+#### 0.12.19 - 08.05.2020
+* Attempts to fix nuget.exe list command in 2020!
+
 #### 0.12.18 - 04.09.2017
 * Removes exclusion of xml files when building artefacts
 
