@@ -1,3 +1,6 @@
+#### 0.12.20 - 22.07.2022
+* Attempts to fix FAKE build in 2022!
+
 #### 0.12.19 - 08.05.2020
 * Attempts to fix nuget.exe list command in 2020!
 

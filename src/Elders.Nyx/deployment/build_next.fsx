@@ -394,11 +394,6 @@ Target "Release" (fun _ ->
 
     if release.CanRelease
     then
-        StageAll ""
-        let notes = String.concat "; " repository.ReleaseNotes.Notes
-        Commit "" (sprintf "%s" notes)
-        Branches.push ""
-
         let tag = eldersNuget.PackageName + "@" + repository.GitVersion.NuGetVersionV2;
         printfn "[nyx] Assign version %s as git tag" tag
         Branches.tag "" tag
