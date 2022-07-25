@@ -160,7 +160,7 @@ public class BuildParameters
         var canBuild = false;
         var dockerRepo = context.EnvironmentVariable("DOCKER_REPO");
         //string currentBranch = OS.ExecuteCommand(context, "git branch | grep \\* | cut -d ' ' -f2");
-        
+
         if ( (string.IsNullOrEmpty(dockerRepo) == false) /*&& (currentBranch == "master")*/ )
         {
             canBuild = true;
@@ -171,11 +171,12 @@ public class BuildParameters
 
     private static bool CheckCanPublishNuGet(ICakeContext context)
     {
-        var apiUrl = context.EnvironmentVariable("nugetserver");
-        var apiKey = context.EnvironmentVariable("RELEASE_NUGETKEY");
-        var password = context.EnvironmentVariable("RELEASE_NUGET_PASSWORD");
-        var userName = context.EnvironmentVariable("RELEASE_NUGET_USERNAME");
+        var apiUrl     = context.EnvironmentVariable("nugetserver");
+        var apiKey     = context.EnvironmentVariable("RELEASE_NUGETKEY");
+        var password   = context.EnvironmentVariable("RELEASE_NUGET_PASSWORD");
+        var userName   = context.EnvironmentVariable("RELEASE_NUGET_USERNAME");
         var sourceName = context.EnvironmentVariable("RELEASE_NUGET_SOURCENAME");
+        var artifact   = context.EnvironmentVariable("BUILD_ARTIFACT");
 
         var canPublish = false;
 
@@ -184,6 +185,10 @@ public class BuildParameters
             canPublish = true;
         }
         else if(string.IsNullOrEmpty(apiKey) == false)
+        {
+            canPublish = true;
+        }
+        else if(string.IsNullOrEmpty(artifact) == false)
         {
             canPublish = true;
         }

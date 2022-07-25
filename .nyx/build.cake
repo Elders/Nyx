@@ -146,16 +146,16 @@ Task("Build-Image")
         string tag = parameters.NugetPackageName + "@" + parameters.Version.SemVersion;
         string repoTag = dockerRepo + ":" + parameters.Version.SemVersion;
         string dockercmd = "docker build ../docker/" + dockerRepo + " --tag " + repoTag;
-        
+
         OS.ExecuteCommand(context, "cp -R " + parameters.Paths.Directories.ArtifactsBinNetCoreAppPublish + "/* ../docker/" + dockerRepo + "/contents/");
         OS.ExecuteCommand(context, dockercmd);
         OS.ExecuteCommand(context, "export TAG=" + parameters.Version.SemVersion);
         OS.ExecuteCommand(context, "docker push " + repoTag);
         OS.ExecuteCommand(context, "git tag " + tag);
         OS.ExecuteCommand(context, "git push --tags");
-        
+
     });
-    
+
 
 Task("Publish")
     .IsDependentOn("Publish-As-App")
@@ -227,16 +227,13 @@ Task("Release")
         if(string.IsNullOrEmpty(apiUrl))
             apiUrl = "https://www.nuget.org/api/v2/package";
 
-        var password = EnvironmentVariable("RELEASE_NUGET_PASSWORD");
+        var password       = EnvironmentVariable("RELEASE_NUGET_PASSWORD");
+        var userName       = EnvironmentVariable("RELEASE_NUGET_USERNAME");
+        var sourceName     = EnvironmentVariable("RELEASE_NUGET_SOURCENAME");
+        var apiKey         = EnvironmentVariable("RELEASE_NUGETKEY");
+        var build_artifact = EnvironmentVariable("BUILD_ARTIFACT");
+        var pkg            = parameters.Packages.All.First();
 
-        var userName = EnvironmentVariable("RELEASE_NUGET_USERNAME");
-
-        var sourceName = EnvironmentVariable("RELEASE_NUGET_SOURCENAME");
-
-        var apiKey = EnvironmentVariable("RELEASE_NUGETKEY");
-
-        var pkg = parameters.Packages.All.First();
-    
         if (string.IsNullOrEmpty(userName) == false && string.IsNullOrEmpty(password) == false && string.IsNullOrEmpty(sourceName) == false && string.IsNullOrEmpty(apiUrl) == false)
         {
             if(NuGetHasSource(apiUrl))
@@ -245,7 +242,7 @@ Task("Release")
             }
 
             NuGetAddSource(sourceName, apiUrl, new NuGetSourcesSettings
-                {  
+                {
                     UserName = userName,
                     Password = password,
                 });
@@ -257,10 +254,23 @@ Task("Release")
         }
         else if(string.IsNullOrEmpty(apiKey) == false)
         {
+            //var nuget = EnvironmentVariable("NUGET_EXE");
+            //Information("====== nuget push\npath {0}\nkey {1}\nurl {2}\nnuget {3}\n", pkg.PackagePath, apiKey, apiUrl, nuget);
+            //OS.ExecuteCommand(context, nuget+" push -Source \"qore\" -ApiKey az " + pkg.PackagePath);
+            Information("====== nuget push\npath {0}\nurl {1}\n", pkg.PackagePath, apiUrl);
             NuGetPush(pkg.PackagePath, new NuGetPushSettings {
                 ApiKey = apiKey,
                 Source = apiUrl
             });
+        }
+        else if(string.IsNullOrEmpty(build_artifact) == false)
+        {
+            Information("====== publish build artifact\npath {0}\ndir {1}\n", pkg.PackagePath, build_artifact);
+            EnsureDirectoryExists(build_artifact);
+            CopyFileToDirectory(pkg.PackagePath, build_artifact);
+            Information("##vso[build.addbuildtag]release");
+            Information("##vso[task.setvariable variable=release]yes");
+            //Information("##vso[build.updatebuildnumber]"+parameters.Version.SemVersion);
         }
         else
         {
