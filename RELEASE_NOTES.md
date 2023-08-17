@@ -1,3 +1,6 @@
+#### 0.12.21 - 17.08.2023
+* Attempts to fix WiX build in 2023!
+
 #### 0.12.20 - 22.07.2022
 * Attempts to fix FAKE build in 2022!
 

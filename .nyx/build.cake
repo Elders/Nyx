@@ -6,7 +6,7 @@
 #addin "nuget:https://www.nuget.org/api/v2?package=semver&version=2.0.4"
 
 #tool "nuget:https://www.nuget.org/api/v2?package=GitVersion.CommandLine&version=3.6.1"
-#tool "nuget:?package=WiX"
+#tool "nuget:?package=WiX&version=3.11.2"
 
 BuildParameters parameters = BuildParameters.GetParameters(Context);
 
